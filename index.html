@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GastroLogic | v7.0 Robust Engine</title>
+    <title>GastroLogic | v7.1 Robust Engine</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -190,8 +190,8 @@
     <script>
         function app() {
             return {
-                // ✅ URL ACTUALIZADA
-                gasUrl: 'https://script.google.com/macros/s/AKfycbyUjBQJftPhZ4PJNDqrvqpj1Zwg5QGc3vTmQXHehCl6VKFNEulYboJaEnx3Gs26R2qFJg/exec', 
+                // ✅ TU NUEVA URL INTEGRADA
+                gasUrl: 'https://script.google.com/macros/s/AKfycbwxCRXLJ3bxGEFBAg1VIUGmnKzCxOt5PGfGtzdlXyZYwhUkX5vEALidzzzDdW6lEiMZlg/exec', 
 
                 view: 'planner',
                 modalOpen: false,
@@ -213,17 +213,14 @@
                     localStorage.setItem('gl_plan_robust_v7', JSON.stringify(this.weeklyPlan));
                 },
 
-                // --- MOTOR DE IMPORTACIÓN AI (VERSIÓN ROBUSTA) ---
                 async importRecipeAI() {
-                    if (!this.gasUrl || this.gasUrl.includes('PEGAR')) return alert("Falta configurar la URL de Google Script");
                     this.isLoading = true;
-                    
                     const fileInput = document.getElementById('recipeFile');
                     const file = fileInput ? fileInput.files[0] : null;
                     
                     try {
                         const promptText = `Analiza este plato: "${this.recipeInput}". 
-                        Responde estrictamente con un objeto JSON (sin markdown): 
+                        Responde estrictamente con un objeto JSON: 
                         {"name": "Nombre", "calories": 0, "ingredients": [{"name": "item", "qty": 1.0, "unit": "kg/u/L"}]}`;
 
                         let contents = [{ parts: [{ text: promptText }] }];
@@ -245,7 +242,6 @@
 
                         const data = await res.json();
 
-                        // VALIDACIÓN DE RESPUESTA PARA EVITAR ERROR 'READING 0'
                         if (data && data.candidates && data.candidates[0] && data.candidates[0].content) {
                             const resultText = data.candidates[0].content.parts[0].text;
                             const recipe = JSON.parse(resultText.replace(/```json|```/g, '').trim());
@@ -270,7 +266,6 @@
                     }
                 },
 
-                // LÓGICA DE CÁLCULO DE ADQUISICIONES
                 get shoppingList() {
                     const needs = {};
                     Object.values(this.weeklyPlan).flat().forEach(id => {
