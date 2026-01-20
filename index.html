@@ -31,6 +31,10 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .loader { border: 2px solid #f3f3f3; border-top: 2px solid #FF6B6B; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Estilos para el Markdown del Chat */
+        .prose p { margin-bottom: 0.5rem; }
+        .prose ul { list-style-type: disc; padding-left: 1.2rem; }
+        .prose strong { color: #FF6B6B; font-weight: 700; }
     </style>
 </head>
 <body class="bg-light text-dark h-screen flex flex-col overflow-hidden" x-data="app()">
@@ -42,7 +46,7 @@
         </div>
         <div class="flex gap-2">
             <div class="bg-chef-50 text-chef-600 px-3 py-1 rounded-full text-[10px] font-bold border border-chef-100 flex items-center gap-1">
-                🔥 <span x-text="calculateWeeklyCalories() + ' kcal/sem'"></span>
+                🔥 <span x-text="calculateWeeklyCalories() + ' kcal'"></span>
             </div>
             <div class="bg-green-50 text-green-700 px-3 py-1 rounded-full text-[10px] font-bold border border-green-200 flex items-center gap-1">
                 💰 <span x-text="formatCurrency(calculateProjectedCost())"></span>
@@ -87,7 +91,6 @@
         </div>
 
         <div x-show="view === 'recipes'" class="space-y-4">
-            
             <div class="bg-dark text-white rounded-2xl p-5 relative overflow-hidden shadow-lg">
                 <div class="absolute top-0 right-0 p-4 opacity-10"><i data-lucide="camera" class="w-24 h-24"></i></div>
                 <h3 class="font-bold text-lg relative z-10">Agregar Nueva Receta</h3>
@@ -96,7 +99,7 @@
                 <div class="space-y-2 relative z-10">
                     <input type="file" id="recipeImage" accept="image/*" class="text-xs w-full bg-white/10 rounded-lg p-2 file:bg-chef-500 file:border-0 file:rounded file:text-white file:text-xs file:font-bold file:px-2">
                     <div class="flex gap-2">
-                        <input x-model="newRecipeInput" type="text" placeholder="O escribe el plato (ej: Milanesa con puré)" class="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+                        <input x-model="newRecipeInput" type="text" placeholder="Ej: Milanesa con puré" class="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
                         <button @click="analyzeRecipeAI" class="bg-chef-500 p-2 rounded-lg disabled:opacity-50" :disabled="isLoading">
                             <i x-show="!isLoading" data-lucide="arrow-right" class="w-5 h-5"></i>
                             <div x-show="isLoading" class="loader w-4 h-4 border-white border-t-transparent"></div>
@@ -153,12 +156,28 @@
             </div>
         </div>
 
+        <div x-show="view === 'ai'" class="space-y-4 h-full flex flex-col">
+            <div class="flex-1 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 overflow-y-auto mb-2" id="chat-container">
+                <div class="bg-gray-50 p-3 rounded-xl rounded-tl-none mb-3 text-xs text-gray-600">
+                    <p class="font-bold mb-1">👨‍🍳 Chef AI conectado.</p>
+                    <p>Dime qué ingredientes tienes o pide sugerencias.</p>
+                </div>
+                <template x-for="msg in chatHistory">
+                    <div :class="msg.role === 'user' ? 'bg-dark text-white self-end ml-10' : 'bg-gray-100 text-dark self-start mr-10'" class="p-3 rounded-xl mb-3 text-xs shadow-sm prose" x-html="msg.html"></div>
+                </template>
+                <div x-show="isLoading" class="p-3 bg-gray-50 rounded-xl rounded-tl-none w-16"><div class="loader"></div></div>
+            </div>
+            <div class="relative shrink-0">
+                <input x-model="chatInput" @keydown.enter="sendChatMessage" type="text" placeholder="Ej: Tengo pollo y papas, ¿qué cocino?" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-chef-500 shadow-lg shadow-gray-100">
+                <button @click="sendChatMessage" class="absolute right-2 top-2 bg-chef-500 text-white p-1.5 rounded-lg hover:bg-chef-600"><i data-lucide="send" class="w-4 h-4"></i></button>
+            </div>
+        </div>
+
         <div x-show="view === 'stock'" class="space-y-4">
              <div class="flex justify-between items-center">
                 <h2 class="font-bold text-lg">Inventario & Precios</h2>
                 <button @click="modalOpen = true" class="bg-dark text-white px-3 py-1 text-xs rounded-full font-bold">+ Item</button>
             </div>
-            
             <div class="space-y-2">
                 <template x-for="item in inventory" :key="item.id">
                     <div class="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center">
@@ -183,22 +202,11 @@
     </main>
 
     <nav class="bg-white border-t border-gray-100 px-6 py-3 flex justify-between items-center shrink-0 z-40 pb-safe">
-        <button @click="view = 'planner'" :class="view === 'planner' ? 'text-dark' : 'text-gray-300'" class="flex flex-col items-center gap-1">
-            <i data-lucide="calendar-days" class="w-6 h-6"></i>
-            <span class="text-[9px] font-bold uppercase">Plan</span>
-        </button>
-        <button @click="view = 'recipes'" :class="view === 'recipes' ? 'text-dark' : 'text-gray-300'" class="flex flex-col items-center gap-1">
-            <i data-lucide="book-open" class="w-6 h-6"></i>
-            <span class="text-[9px] font-bold uppercase">Recetas</span>
-        </button>
-        <button @click="view = 'shopping'" :class="view === 'shopping' ? 'text-dark' : 'text-gray-300'" class="flex flex-col items-center gap-1">
-            <i data-lucide="shopping-cart" class="w-6 h-6"></i>
-            <span class="text-[9px] font-bold uppercase">Compra</span>
-        </button>
-        <button @click="view = 'stock'" :class="view === 'stock' ? 'text-dark' : 'text-gray-300'" class="flex flex-col items-center gap-1">
-            <i data-lucide="package" class="w-6 h-6"></i>
-            <span class="text-[9px] font-bold uppercase">Stock</span>
-        </button>
+        <button @click="view = 'planner'" :class="view === 'planner' ? 'text-dark' : 'text-gray-300'" class="flex flex-col items-center gap-1"><i data-lucide="calendar-days" class="w-6 h-6"></i><span class="text-[9px] font-bold uppercase">Plan</span></button>
+        <button @click="view = 'recipes'" :class="view === 'recipes' ? 'text-dark' : 'text-gray-300'" class="flex flex-col items-center gap-1"><i data-lucide="book-open" class="w-6 h-6"></i><span class="text-[9px] font-bold uppercase">Recetas</span></button>
+        <button @click="view = 'shopping'" :class="view === 'shopping' ? 'text-dark' : 'text-gray-300'" class="flex flex-col items-center gap-1"><i data-lucide="shopping-cart" class="w-6 h-6"></i><span class="text-[9px] font-bold uppercase">Compra</span></button>
+        <button @click="view = 'ai'" :class="view === 'ai' ? 'text-dark' : 'text-gray-300'" class="flex flex-col items-center gap-1"><i data-lucide="message-circle" class="w-6 h-6"></i><span class="text-[9px] font-bold uppercase">Chef</span></button>
+        <button @click="view = 'stock'" :class="view === 'stock' ? 'text-dark' : 'text-gray-300'" class="flex flex-col items-center gap-1"><i data-lucide="package" class="w-6 h-6"></i><span class="text-[9px] font-bold uppercase">Stock</span></button>
     </nav>
 
     <div x-show="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" style="display:none">
@@ -211,31 +219,36 @@
                 <select x-model="newItem.unidad" class="w-full border rounded p-2"><option>u</option><option>kg</option><option>L</option></select>
             </div>
             <button @click="addItem" class="w-full bg-dark text-white p-3 rounded-xl mt-4 font-bold">Guardar</button>
+            <button @click="modalOpen=false" class="w-full text-gray-400 p-2 text-xs mt-2">Cancelar</button>
         </div>
     </div>
 
     <script>
         function app() {
             return {
-                apiKey: 'AIzaSyAz0SPk6FpFks7wYjZkUPLzT2DCjT58adI', 
+                // ⚠️ CAMBIA ESTO POR TU NUEVA CLAVE (NO USES LA EXPUESTA)
+                apiKey: 'TU_NUEVA_CLAVE_AQUI', 
+                
                 view: 'planner',
                 modalOpen: false,
                 isLoading: false,
                 newRecipeInput: '',
+                chatInput: '',
+                chatHistory: [],
                 
-                // --- STATE ---
+                // Model config
+                modelName: 'gemini-1.5-flash-latest',
+                
+                // Data
                 inventory: JSON.parse(localStorage.getItem('gl_inventory')) || [
                     { id: 1, nombre: 'Pollo', cantidad: 2, unidad: 'kg', precio: 5000 },
                     { id: 2, nombre: 'Arroz', cantidad: 1, unidad: 'kg', precio: 1500 },
-                    { id: 3, nombre: 'Huevos', cantidad: 6, unidad: 'u', precio: 200 } // precio x unidad
+                    { id: 3, nombre: 'Huevos', cantidad: 6, unidad: 'u', precio: 200 }
                 ],
-                
                 recipes: JSON.parse(localStorage.getItem('gl_recipes')) || [],
-                
                 weeklyPlan: JSON.parse(localStorage.getItem('gl_plan')) || {
                     'Lunes': [], 'Martes': [], 'Miércoles': [], 'Jueves': [], 'Viernes': [], 'Sábado': [], 'Domingo': []
                 },
-
                 newItem: { nombre: '', precio: '', cantidad: 1, unidad: 'u' },
 
                 init() {
@@ -251,28 +264,22 @@
                     localStorage.setItem('gl_plan', JSON.stringify(this.weeklyPlan));
                 },
 
-                // --- 1. GESTIÓN PLANIFICADOR ---
+                // 1. PLANIFICADOR
                 addMealSlot(day) { this.weeklyPlan[day].push(""); },
                 removeMealSlot(day, index) { this.weeklyPlan[day].splice(index, 1); },
-                
                 autoFillPlan() {
                     if (this.recipes.length === 0) return alert("¡Agrega recetas primero!");
                     const days = Object.keys(this.weeklyPlan);
                     days.forEach(day => {
-                        // Si el día está vacío, agrega 2 comidas (Almuerzo/Cena)
                         if (this.weeklyPlan[day].length === 0) {
                             this.weeklyPlan[day].push(this.getRandomRecipeId());
                             this.weeklyPlan[day].push(this.getRandomRecipeId());
                         } else {
-                            // Rellena los slots vacíos existentes
                             this.weeklyPlan[day] = this.weeklyPlan[day].map(slot => slot === "" ? this.getRandomRecipeId() : slot);
                         }
                     });
                 },
-                getRandomRecipeId() {
-                    return this.recipes[Math.floor(Math.random() * this.recipes.length)].id;
-                },
-
+                getRandomRecipeId() { return this.recipes[Math.floor(Math.random() * this.recipes.length)].id; },
                 calculateWeeklyCalories() {
                     let total = 0;
                     Object.values(this.weeklyPlan).flat().forEach(recipeId => {
@@ -282,11 +289,9 @@
                     return total;
                 },
 
-                // --- 2. GESTIÓN COMPRAS & PRESUPUESTO ---
+                // 2. COMPRAS
                 get shoppingList() {
                     const needs = {};
-                    
-                    // 1. Sumar necesidades del plan
                     Object.values(this.weeklyPlan).flat().forEach(recipeId => {
                         const r = this.recipes.find(x => x.id == recipeId);
                         if (r && r.ingredients) {
@@ -297,98 +302,92 @@
                             });
                         }
                     });
-
-                    // 2. Comparar con inventario y calcular costo
                     return Object.keys(needs).map(name => {
                         const need = needs[name];
-                        // Buscar en inventario (Búsqueda laxa)
                         const stockItem = this.inventory.find(i => i.nombre.toLowerCase().includes(name) || name.includes(i.nombre.toLowerCase()));
-                        
                         const stockAmount = stockItem ? parseFloat(stockItem.cantidad) : 0;
                         const missing = Math.max(0, need.amount - stockAmount);
-                        const price = stockItem ? parseFloat(stockItem.precio) : 0; // Precio por unidad/kg
-                        
+                        const price = stockItem ? parseFloat(stockItem.precio) : 0;
                         return {
                             name: name.charAt(0).toUpperCase() + name.slice(1),
-                            needed: need.amount,
-                            stock: stockAmount,
-                            missing: missing,
-                            unit: need.unit,
-                            cost: missing * price // Costo proyectado
+                            needed: need.amount, stock: stockAmount, missing: missing, unit: need.unit, cost: missing * price
                         };
                     }).filter(i => i.needed > 0).sort((a,b) => b.missing - a.missing);
                 },
+                get shoppingListCost() { return this.shoppingList.reduce((acc, item) => acc + item.cost, 0); },
+                calculateProjectedCost() { return this.shoppingListCost; },
 
-                calculateProjectedCost() {
-                    return this.shoppingList.reduce((acc, item) => acc + item.cost, 0);
-                },
-
-                // --- 3. IMPORTADOR AI (GEMINI VISION) ---
+                // 3. GEMINI VISION & TEXT (CORE FIX)
                 async analyzeRecipeAI() {
+                    if (!this.apiKey || this.apiKey.includes('NUEVA_CLAVE')) return alert('Falta configurar la API Key en el código');
                     this.isLoading = true;
                     const fileInput = document.getElementById('recipeImage');
                     const textInput = this.newRecipeInput;
                     
                     let parts = [];
-                    
-                    // Si hay texto
                     if (textInput) parts.push({ text: `Analiza este plato: "${textInput}".` });
-                    
-                    // Si hay imagen
                     if (fileInput.files.length > 0) {
                         const base64 = await this.fileToGenerativePart(fileInput.files[0]);
                         parts.push(base64);
                     }
 
-                    if (parts.length === 0) {
-                        this.isLoading = false;
-                        return alert("Sube una foto o escribe un nombre.");
-                    }
+                    if (parts.length === 0) { this.isLoading = false; return alert("Sube una foto o escribe un nombre."); }
 
-                    const prompt = `
-                        Eres un nutricionista y chef experto. Analiza la imagen o el nombre del plato.
-                        Devuelve SOLAMENTE un JSON válido (sin markdown, sin bloques de código) con esta estructura exacta:
-                        {
-                            "name": "Nombre corto del plato",
-                            "calories": 0 (número entero aproximado por porción),
-                            "ingredients": [
-                                {"name": "ingrediente generico (ej: pollo, arroz)", "qty": 1, "unit": "kg/u/L"}
-                            ],
-                            "instructions": "Resumen breve de pasos"
-                        }
-                        Normaliza los ingredientes para que coincidan con categorias de supermercado (ej: usar 'pollo' en vez de 'pechuga troceada').
-                    `;
+                    const prompt = `Devuelve SOLAMENTE un JSON valido con esta estructura: {"name": "Nombre plato", "calories": 0, "ingredients": [{"name": "ingrediente", "qty": 1, "unit": "u/kg"}], "instructions": "pasos"}`;
                     parts.push({ text: prompt });
 
+                    await this.callGemini(parts, (text) => {
+                        let cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                        const recipeData = JSON.parse(cleanText);
+                        if (fileInput.files.length > 0) recipeData.image = URL.createObjectURL(fileInput.files[0]);
+                        recipeData.id = Date.now();
+                        this.recipes.push(recipeData);
+                        this.newRecipeInput = '';
+                        fileInput.value = '';
+                        alert("¡Receta guardada!");
+                    });
+                },
+
+                async sendChatMessage() {
+                    if (!this.chatInput) return;
+                    const msg = this.chatInput;
+                    this.chatHistory.push({ role: 'user', html: msg });
+                    this.chatInput = '';
+                    this.isLoading = true;
+
+                    // Contexto del inventario
+                    const context = "Tengo en inventario: " + this.inventory.map(i => `${i.cantidad} ${i.unidad} de ${i.nombre}`).join(', ');
+                    const parts = [{ text: `Eres un Chef experto. ${context}. Usuario: ${msg}` }];
+
+                    await this.callGemini(parts, (text) => {
+                        this.chatHistory.push({ role: 'ai', html: marked.parse(text) });
+                    });
+                },
+
+                // FUNCIÓN CENTRALIZADA DE LLAMADA A API (PARA EVITAR ERRORES DUPLICADOS)
+                async callGemini(parts, callback) {
                     try {
-                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`, {
+                        // URL corregida a v1beta + gemini-1.5-flash-latest
+                        const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.modelName}:generateContent?key=${this.apiKey}`;
+                        
+                        const response = await fetch(url, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ contents: [{ parts: parts }] })
                         });
 
                         const data = await response.json();
-                        let textResponse = data.candidates[0].content.parts[0].text;
                         
-                        // Limpieza del JSON (Gemini a veces pone \`\`\`json)
-                        textResponse = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-                        
-                        const recipeData = JSON.parse(textResponse);
-                        
-                        // Agregar imagen si existe para mostrarla en la card
-                        if (fileInput.files.length > 0) {
-                            recipeData.image = URL.createObjectURL(fileInput.files[0]);
+                        if (data.error) {
+                            console.error("Error API:", data.error);
+                            throw new Error(data.error.message);
                         }
-                        
-                        recipeData.id = Date.now();
-                        this.recipes.push(recipeData);
-                        this.newRecipeInput = '';
-                        fileInput.value = '';
-                        alert("¡Receta guardada!");
+
+                        const text = data.candidates[0].content.parts[0].text;
+                        callback(text);
 
                     } catch (e) {
-                        console.error(e);
-                        alert("Error analizando receta. Intenta de nuevo.");
+                        alert("Error de Google Gemini: " + e.message + ". \n\nRevisa la consola (F12) para más detalles.");
                     } finally {
                         this.isLoading = false;
                     }
@@ -404,18 +403,10 @@
                     });
                 },
 
-                // --- UTILIDADES ---
-                addItem() {
-                    this.inventory.push({ ...this.newItem, id: Date.now() });
-                    this.modalOpen = false;
-                    this.newItem = { nombre: '', precio: '', cantidad: 1, unidad: 'u' };
-                },
-                deleteRecipe(id) {
-                    if(confirm("¿Borrar receta?")) this.recipes = this.recipes.filter(r => r.id !== id);
-                },
-                formatCurrency(val) {
-                    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
-                }
+                // UTILS
+                addItem() { this.inventory.push({ ...this.newItem, id: Date.now() }); this.modalOpen = false; this.newItem = { nombre: '', precio: '', cantidad: 1, unidad: 'u' }; },
+                deleteRecipe(id) { if(confirm("¿Borrar?")) this.recipes = this.recipes.filter(r => r.id !== id); },
+                formatCurrency(val) { return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val); }
             }
         }
     </script>
