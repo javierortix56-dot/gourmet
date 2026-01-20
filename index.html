@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GastroLogic | OpenAI Engine</title>
+    <title>GastroLogic | Pro Proxy</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -12,28 +12,28 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #FF6B6B; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #EF4444; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-[#F7F9FC] text-[#2D3436] h-screen flex flex-col overflow-hidden" x-data="app()">
 
-    <header class="bg-white px-4 py-3 flex justify-between items-center shadow-sm z-20 shrink-0">
-        <div class="flex items-center gap-2">
-            <div class="bg-[#2D3436] text-white p-2 rounded-lg"><i data-lucide="activity" class="w-5 h-5"></i></div>
-            <h1 class="font-black text-lg tracking-tight uppercase">GastroLogic</h1>
+    <header class="bg-white px-5 py-4 flex justify-between items-center shadow-sm z-20 shrink-0 border-b border-gray-100">
+        <div class="flex items-center gap-3">
+            <div class="bg-black text-white p-2 rounded-xl shadow-lg"><i data-lucide="chef-hat" class="w-6 h-6"></i></div>
+            <h1 class="font-black text-xl tracking-tighter">GASTROLOGIC</h1>
         </div>
         <div class="flex gap-2">
-            <div class="bg-red-50 text-red-600 px-3 py-1 rounded-full text-[10px] font-bold border border-red-100" x-text="calculateWeeklyCalories() + ' KCAL/SEM'"></div>
-            <div class="bg-green-50 text-green-700 px-3 py-1 rounded-full text-[10px] font-bold border border-green-200" x-text="formatCurrency(calculateProjectedCost())"></div>
+            <div class="bg-orange-50 text-orange-600 px-3 py-1.5 rounded-full text-[10px] font-black border border-orange-100" x-text="calculateWeeklyCalories() + ' KCAL'"></div>
+            <div class="bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-[10px] font-black border border-green-200" x-text="formatCurrency(calculateProjectedCost())"></div>
         </div>
     </header>
 
-    <main class="flex-1 overflow-y-auto hide-scrollbar p-4 pb-24">
+    <main class="flex-1 overflow-y-auto hide-scrollbar p-5 pb-28">
         
         <div x-show="view === 'planner'" class="space-y-4">
             <div class="flex justify-between items-center">
-                <h2 class="font-bold text-sm uppercase text-gray-400">Programación Semanal</h2>
+                <h2 class="font-black text-sm uppercase text-gray-400 tracking-widest">Plan de Comidas</h2>
                 <button @click="autoFillPlan" class="text-[10px] bg-black text-white px-4 py-2 rounded-lg font-bold">SUGERIR MENÚ</button>
             </div>
             
@@ -47,9 +47,9 @@
                         <template x-for="(meal, index) in meals" :key="index">
                             <div class="flex items-center gap-2">
                                 <select x-model="weeklyPlan[day][index]" @change="saveData" class="flex-1 bg-gray-50 border-0 text-xs rounded-xl p-3 font-bold">
-                                    <option value="">-- Seleccionar Plato --</option>
+                                    <option value="">-- Seleccionar --</option>
                                     <template x-for="r in recipes" :key="r.id">
-                                        <option :value="r.id" x-text="r.name + ' (' + r.calories + ' cal)'"></option>
+                                        <option :value="r.id" x-text="r.name"></option>
                                     </template>
                                 </select>
                                 <button @click="removeMealSlot(day, index)" class="text-gray-200"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
@@ -61,103 +61,88 @@
         </div>
 
         <div x-show="view === 'recipes'" class="space-y-4">
-            <div class="bg-[#2D3436] text-white rounded-3xl p-6 relative overflow-hidden shadow-xl">
-                <h3 class="font-black text-lg mb-1 uppercase">Importador AI</h3>
-                <p class="text-[10px] text-gray-400 mb-4 font-bold tracking-widest uppercase">Foto o texto -> Receta</p>
-                
+            <div class="bg-black text-white rounded-3xl p-6 relative overflow-hidden shadow-xl">
+                <h3 class="font-black text-lg mb-1 uppercase italic">Cargar Receta AI</h3>
+                <p class="text-[9px] text-gray-500 mb-4 font-bold uppercase tracking-widest">Seguro vía Google Proxy</p>
                 <div class="space-y-3 relative z-10">
-                    <input type="file" id="recipeFile" accept="image/*" class="text-[10px] w-full bg-white/10 rounded-xl p-3" @change="fileName = $event.target.files[0].name">
+                    <input type="file" id="recipeFile" accept="image/*" class="text-[10px] w-full bg-white/10 rounded-xl p-3">
                     <div class="flex gap-2">
-                        <input x-model="recipeInput" type="text" placeholder="Ej: Milanesas con puré" class="flex-1 bg-white/10 border-0 rounded-xl px-4 py-3 text-xs focus:ring-1 focus:ring-red-500">
-                        <button @click="importRecipeAI" class="bg-red-500 p-3 rounded-xl hover:bg-red-600 transition-all disabled:opacity-50" :disabled="isLoading">
+                        <input x-model="recipeInput" type="text" placeholder="Ej: Pollo con puré" class="flex-1 bg-white/10 border-0 rounded-xl px-4 py-3 text-xs focus:ring-1 focus:ring-red-500">
+                        <button @click="importRecipeAI" class="bg-red-500 p-3 rounded-xl hover:bg-red-600 disabled:opacity-50" :disabled="isLoading">
                             <div x-show="isLoading" class="loader"></div>
                             <i x-show="!isLoading" data-lucide="camera" class="w-5 h-5"></i>
                         </button>
                     </div>
                 </div>
             </div>
-
             <div class="grid grid-cols-2 gap-3">
                 <template x-for="r in recipes" :key="r.id">
-                    <div class="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
-                        <div class="h-24 bg-gray-100 rounded-xl mb-2 overflow-hidden relative">
-                            <img :src="r.image || 'https://placehold.co/400x300?text=Comida'" class="w-full h-full object-cover">
-                            <button @click="deleteRecipe(r.id)" class="absolute top-1 right-1 bg-white/80 p-1 rounded-full"><i data-lucide="x" class="w-3 h-3 text-red-500"></i></button>
+                    <div class="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm relative group">
+                        <button @click="deleteRecipe(r.id)" class="absolute top-1 right-1 text-red-200"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                        <div class="h-24 bg-gray-100 rounded-xl mb-2 overflow-hidden">
+                            <img :src="r.image || 'https://placehold.co/400x300?text=Receta'" class="w-full h-full object-cover">
                         </div>
-                        <p class="font-black text-[11px] truncate uppercase" x-text="r.name"></p>
-                        <p class="text-[9px] text-gray-400 font-bold" x-text="r.calories + ' CAL'"></p>
+                        <p class="font-black text-[10px] uppercase truncate" x-text="r.name"></p>
                     </div>
                 </template>
             </div>
         </div>
 
         <div x-show="view === 'shopping'" class="space-y-4">
-            <h2 class="font-bold text-sm uppercase text-gray-400">Presupuesto y Faltantes</h2>
-            <div class="space-y-2">
-                <template x-for="item in shoppingList" :key="item.name">
-                    <div class="bg-white p-4 rounded-2xl border border-gray-100 flex justify-between items-center">
-                        <div>
-                            <p class="font-black text-xs uppercase" x-text="item.name"></p>
-                            <div class="flex gap-2 mt-1">
-                                <span class="text-[9px] font-bold text-red-500" x-text="'FALTAN: ' + item.missing + ' ' + item.unit"></span>
-                                <span class="text-[9px] font-bold text-gray-300" x-text="'STOCK: ' + item.stock"></span>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-black text-xs text-green-600" x-text="formatCurrency(item.cost)"></p>
-                            <p class="text-[9px] text-gray-300 font-bold uppercase">Proyectado</p>
-                        </div>
-                    </div>
-                </template>
-                <div x-show="shoppingList.length === 0" class="text-center py-20 text-xs text-gray-300 font-bold">Define tu plan semanal para ver la lista de compras</div>
-            </div>
-        </div>
-
-        <div x-show="view === 'stock'" class="space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 class="font-bold text-sm uppercase text-gray-400">Inventario y Precios</h2>
-                <button @click="modalOpen = true" class="bg-black text-white px-4 py-2 rounded-lg text-[10px] font-bold uppercase">Nuevo Item</button>
-            </div>
-            <template x-for="item in inventory" :key="item.id">
+            <h2 class="font-bold text-xs uppercase text-gray-400 tracking-widest text-center">Necesidades de Compra</h2>
+            <template x-for="item in shoppingList" :key="item.name">
                 <div class="bg-white p-4 rounded-2xl border border-gray-100 flex justify-between items-center shadow-sm">
-                    <div class="flex-1">
-                        <input x-model="item.nombre" @change="saveData" class="font-black text-xs uppercase bg-transparent w-full focus:outline-none">
-                        <div class="flex gap-2 mt-1">
-                            <span class="text-[10px] font-bold text-gray-400" x-text="item.cantidad + ' ' + item.unit"></span>
-                        </div>
+                    <div>
+                        <p class="font-black text-xs uppercase" x-text="item.name"></p>
+                        <p class="text-[9px] font-bold text-red-500 mt-0.5" x-text="'FALTAN: ' + item.missing + ' ' + item.unit"></p>
                     </div>
-                    <div class="text-right flex items-center gap-3">
-                        <div>
-                            <input x-model="item.precio" @change="saveData" type="number" class="w-20 text-right font-black text-xs text-green-600 border-b border-gray-100 focus:outline-none">
-                            <p class="text-[8px] text-gray-300 font-bold uppercase" x-text="'PRECIO x ' + item.unit"></p>
-                        </div>
-                        <button @click="deleteItem(item.id)" class="text-gray-200"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    <div class="text-right">
+                        <p class="font-black text-xs text-green-600" x-text="formatCurrency(item.cost)"></p>
+                        <p class="text-[8px] text-gray-300 font-bold uppercase">Proyectado</p>
                     </div>
                 </div>
             </template>
         </div>
 
+        <div x-show="view === 'stock'" class="space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="font-bold text-xs uppercase text-gray-400 tracking-widest">Stock y Precios</h2>
+                <button @click="modalOpen = true" class="bg-black text-white px-4 py-2 rounded-lg text-[10px] font-bold">NUEVO ITEM</button>
+            </div>
+            <template x-for="item in inventory" :key="item.id">
+                <div class="bg-white p-4 rounded-2xl border border-gray-100 flex justify-between items-center shadow-sm">
+                    <div class="flex-1">
+                        <input x-model="item.nombre" @change="saveData" class="font-black text-xs uppercase bg-transparent w-full focus:outline-none">
+                        <p class="text-[10px] text-gray-400 font-bold mt-1" x-text="item.cantidad + ' ' + item.unit"></p>
+                    </div>
+                    <div class="text-right">
+                        <input x-model="item.precio" @change="saveData" type="number" class="w-20 text-right font-black text-xs text-green-600 border-b border-gray-100 focus:outline-none">
+                        <p class="text-[8px] text-gray-300 font-bold uppercase">Precio Unit.</p>
+                    </div>
+                </div>
+            </template>
+        </div>
     </main>
 
-    <nav class="bg-white border-t border-gray-100 px-6 py-4 flex justify-between items-center shrink-0">
+    <nav class="bg-white border-t border-gray-100 px-6 py-4 flex justify-between items-center shrink-0 pb-safe z-30">
         <button @click="view = 'planner'" :class="view === 'planner' ? 'text-red-500' : 'text-gray-300'"><i data-lucide="calendar" class="w-6 h-6"></i></button>
-        <button @click="view = 'recipes'" :class="view === 'recipes' ? 'text-red-500' : 'text-gray-300'"><i data-lucide="book-open" class="w-6 h-6"></i></button>
+        <button @click="view = 'recipes'" :class="view === 'recipes' ? 'text-red-500' : 'text-gray-300'"><i data-lucide="camera" class="w-6 h-6"></i></button>
         <button @click="view = 'shopping'" :class="view === 'shopping' ? 'text-red-500' : 'text-gray-300'"><i data-lucide="shopping-cart" class="w-6 h-6"></i></button>
         <button @click="view = 'stock'" :class="view === 'stock' ? 'text-red-500' : 'text-gray-300'"><i data-lucide="package" class="w-6 h-6"></i></button>
     </nav>
 
-    <div x-show="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" style="display:none">
+    <div x-show="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" style="display:none">
         <div class="bg-white p-8 rounded-[32px] w-full max-w-sm shadow-2xl">
-            <h3 class="font-black text-xl mb-6 uppercase">Agregar Producto</h3>
+            <h3 class="font-black text-xl mb-6 uppercase">Nuevo Producto</h3>
             <div class="space-y-4">
-                <input x-model="newItem.nombre" placeholder="NOMBRE (EJ: POLLO)" class="w-full border-0 bg-gray-50 rounded-2xl p-4 text-xs font-bold uppercase">
-                <input x-model="newItem.precio" type="number" placeholder="PRECIO POR UNIDAD/KG" class="w-full border-0 bg-gray-50 rounded-2xl p-4 text-xs font-bold">
+                <input x-model="newItem.nombre" placeholder="NOMBRE (EJ: CARNE)" class="w-full bg-gray-50 rounded-2xl p-4 text-xs font-bold border-0">
+                <input x-model="newItem.precio" type="number" placeholder="PRECIO UNITARIO" class="w-full bg-gray-50 rounded-2xl p-4 text-xs font-bold border-0">
                 <div class="flex gap-2">
-                    <input x-model="newItem.cantidad" type="number" placeholder="CANT." class="w-full border-0 bg-gray-50 rounded-2xl p-4 text-xs font-bold">
-                    <select x-model="newItem.unit" class="w-full border-0 bg-gray-50 rounded-2xl p-4 text-xs font-bold"><option>kg</option><option>u</option><option>L</option></select>
+                    <input x-model="newItem.cantidad" type="number" placeholder="STOCK" class="w-full bg-gray-50 rounded-2xl p-4 text-xs font-bold border-0">
+                    <select x-model="newItem.unit" class="w-full bg-gray-50 rounded-2xl p-4 text-xs font-bold border-0"><option>kg</option><option>u</option><option>L</option></select>
                 </div>
-                <button @click="addItem" class="w-full bg-red-500 text-white p-5 rounded-2xl font-black uppercase text-xs shadow-lg shadow-red-200">Guardar Item</button>
-                <button @click="modalOpen = false" class="w-full text-gray-400 font-bold p-2 text-[10px] uppercase">Cancelar</button>
+                <button @click="addItem" class="w-full bg-red-500 text-white p-5 rounded-2xl font-black uppercase text-xs shadow-lg">Guardar</button>
+                <button @click="modalOpen = false" class="w-full text-gray-300 font-bold p-2 text-[10px] uppercase">Cerrar</button>
             </div>
         </div>
     </div>
@@ -165,116 +150,86 @@
     <script>
         function app() {
             return {
-                // ⚠️ PEGAR CLAVE OPENAI AQUÍ
-                apiKey: 'PEGA_TU_CLAVE_OPENAI_AQUI',
-                
+                // ✅ TU URL DE GOOGLE YA INTEGRADA:
+                gasUrl: 'https://script.google.com/macros/s/AKfycbwAZ1JXSAskNDfbPgOBnBAPwjLcMy8s2T6BdO6frtxrB_Tv6XmG2MC9--bp4x_n9fbtUg/exec', 
+
                 view: 'planner',
                 modalOpen: false,
                 isLoading: false,
                 recipeInput: '',
-                fileName: '',
-                
-                // DATA
-                inventory: JSON.parse(localStorage.getItem('gl_stock_v5')) || [],
-                recipes: JSON.parse(localStorage.getItem('gl_recipes_v5')) || [],
-                weeklyPlan: JSON.parse(localStorage.getItem('gl_plan_v5')) || { 'Lunes': [], 'Martes': [], 'Miércoles': [], 'Jueves': [], 'Viernes': [], 'Sábado': [], 'Domingo': [] },
+                inventory: JSON.parse(localStorage.getItem('gl_stock_robust')) || [],
+                recipes: JSON.parse(localStorage.getItem('gl_recipes_robust')) || [],
+                weeklyPlan: JSON.parse(localStorage.getItem('gl_plan_robust')) || { 'Lunes': [], 'Martes': [], 'Miércoles': [], 'Jueves': [], 'Viernes': [], 'Sábado': [], 'Domingo': [] },
                 newItem: { nombre: '', precio: '', cantidad: 0, unit: 'kg' },
 
-                init() {
-                    lucide.createIcons();
-                },
-
+                init() { lucide.createIcons(); },
                 saveData() {
-                    localStorage.setItem('gl_stock_v5', JSON.stringify(this.inventory));
-                    localStorage.setItem('gl_recipes_v5', JSON.stringify(this.recipes));
-                    localStorage.setItem('gl_plan_v5', JSON.stringify(this.weeklyPlan));
+                    localStorage.setItem('gl_stock_robust', JSON.stringify(this.inventory));
+                    localStorage.setItem('gl_recipes_robust', JSON.stringify(this.recipes));
+                    localStorage.setItem('gl_plan_robust', JSON.stringify(this.weeklyPlan));
                 },
 
-                // 1. LÓGICA PLANIFICADOR
-                addMealSlot(day) { this.weeklyPlan[day].push(""); this.saveData(); },
-                removeMealSlot(day, index) { this.weeklyPlan[day].splice(index, 1); this.saveData(); },
-                autoFillPlan() {
-                    if (this.recipes.length < 1) return alert("Carga algunas recetas primero para poder sugerir.");
-                    Object.keys(this.weeklyPlan).forEach(day => {
-                        if (this.weeklyPlan[day].length === 0) this.weeklyPlan[day] = ["", ""];
-                        this.weeklyPlan[day] = this.weeklyPlan[day].map(() => this.recipes[Math.floor(Math.random() * this.recipes.length)].id);
-                    });
-                    this.saveData();
-                },
-                calculateWeeklyCalories() {
-                    return Object.values(this.weeklyPlan).flat().reduce((acc, id) => {
-                        const r = this.recipes.find(x => x.id == id);
-                        return acc + (r ? parseInt(r.calories) : 0);
-                    }, 0);
-                },
-
-                // 2. LÓGICA AI (OPENAI VISION/TEXT)
+                // IMPORTADOR CON GEMINI VÍA PROXY
                 async importRecipeAI() {
-                    if (this.apiKey.includes('PEGA')) return alert("Falta la API Key de OpenAI");
                     this.isLoading = true;
                     const file = document.getElementById('recipeFile').files[0];
-                    
                     try {
-                        let messages = [{
-                            role: "user",
-                            content: [
-                                { type: "text", text: `Analiza este plato o texto: "${this.recipeInput}". Devuelve estrictamente un JSON sin Markdown: {"name": "Nombre", "calories": 0, "ingredients": [{"name": "ingrediente", "qty": 1.0, "unit": "kg/u/L"}]}. Usa ingredientes genéricos que coincidan con stock.` }
-                            ]
+                        let contents = [{
+                            parts: [{ text: `Analiza: "${this.recipeInput}". Devuelve estrictamente un JSON: {"name": "Nombre", "calories": 0, "ingredients": [{"name": "ingrediente", "qty": 1.0, "unit": "kg/u/L"}]}.` }]
                         }];
 
                         if (file) {
                             const base64 = await this.toBase64(file);
-                            messages[0].content.push({ type: "image_url", image_url: { url: base64 } });
+                            contents[0].parts.push({ inline_data: { mime_type: file.type, data: base64.split(',')[1] } });
                         }
 
-                        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+                        const res = await fetch(this.gasUrl, {
                             method: "POST",
-                            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${this.apiKey}` },
-                            body: JSON.stringify({ model: "gpt-4o-mini", messages, response_format: { type: "json_object" } })
+                            body: JSON.stringify({ contents })
                         });
 
                         const data = await res.json();
-                        const recipe = JSON.parse(data.choices[0].message.content);
+                        
+                        // Si Google devuelve error, lo atrapamos aquí
+                        if(data.error) throw new Error("Error del servidor: " + JSON.stringify(data.error));
+
+                        const resultText = data.candidates[0].content.parts[0].text;
+                        const recipe = JSON.parse(resultText.replace(/```json|```/g, '').trim());
+                        
                         recipe.id = Date.now();
                         if (file) recipe.image = URL.createObjectURL(file);
-                        
                         this.recipes.push(recipe);
                         this.saveData();
                         this.recipeInput = '';
-                        document.getElementById('recipeFile').value = '';
-                        alert("Plato agregado a la biblioteca.");
-                    } catch (e) {
-                        alert("Error de conexión: " + e.message);
-                    } finally { this.isLoading = false; }
+                        alert("✅ Plato cargado.");
+                    } catch (e) { alert("Error: " + e.message); }
+                    finally { this.isLoading = false; }
                 },
 
-                // 3. LÓGICA COMPRAS Y PRESUPUESTO (Punto clave)
+                // LÓGICA DE COMPRA Y COSTOS
                 get shoppingList() {
                     const needs = {};
                     Object.values(this.weeklyPlan).flat().forEach(id => {
                         const r = this.recipes.find(x => x.id == id);
                         if (r) r.ingredients.forEach(i => {
-                            const key = i.name.toLowerCase().trim();
-                            if (!needs[key]) needs[key] = { amount: 0, unit: i.unit };
-                            needs[key].amount += parseFloat(i.qty);
+                            const k = i.name.toLowerCase().trim();
+                            if (!needs[k]) needs[k] = { amount: 0, unit: i.unit };
+                            needs[k].amount += parseFloat(i.qty);
                         });
                     });
-
                     return Object.keys(needs).map(name => {
-                        const stock = this.inventory.find(i => i.nombre.toLowerCase().includes(name)) || { cantidad: 0, precio: 0, unit: needs[name].unit };
+                        const stock = this.inventory.find(i => i.nombre.toLowerCase().includes(name)) || { cantidad: 0, precio: 0 };
                         const missing = Math.max(0, needs[name].amount - stock.cantidad);
-                        return {
-                            name: name.toUpperCase(),
-                            missing: missing.toFixed(2),
-                            stock: stock.cantidad,
-                            unit: needs[name].unit,
-                            cost: missing * stock.precio
-                        };
-                    }).filter(i => i.missing > 0 || i.stock > 0);
+                        return { name, missing: missing.toFixed(2), unit: needs[name].unit, cost: missing * stock.precio };
+                    }).filter(i => i.missing > 0);
                 },
 
-                calculateProjectedCost() {
-                    return this.shoppingList.reduce((acc, i) => acc + i.cost, 0);
+                calculateProjectedCost() { return this.shoppingList.reduce((acc, i) => acc + i.cost, 0); },
+                calculateWeeklyCalories() {
+                    return Object.values(this.weeklyPlan).flat().reduce((acc, id) => {
+                        const r = this.recipes.find(x => x.id == id);
+                        return acc + (r ? parseInt(r.calories) : 0);
+                    }, 0);
                 },
 
                 // UTILS
@@ -285,14 +240,21 @@
                     this.newItem = { nombre: '', precio: '', cantidad: 0, unit: 'kg' };
                     lucide.createIcons();
                 },
-                deleteItem(id) { this.inventory = this.inventory.filter(i => i.id !== id); this.saveData(); },
-                deleteRecipe(id) { this.recipes = this.recipes.filter(i => i.id !== id); this.saveData(); },
-                toBase64: file => new Promise((r, j) => {
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = () => r(reader.result);
+                addMealSlot(day) { this.weeklyPlan[day].push(""); this.saveData(); },
+                removeMealSlot(day, idx) { this.weeklyPlan[day].splice(idx, 1); this.saveData(); },
+                autoFillPlan() {
+                    if (this.recipes.length < 1) return alert("Carga algunas recetas primero.");
+                    Object.keys(this.weeklyPlan).forEach(d => {
+                        this.weeklyPlan[d] = [this.recipes[Math.floor(Math.random() * this.recipes.length)].id, this.recipes[Math.floor(Math.random() * this.recipes.length)].id];
+                    });
+                    this.saveData();
+                },
+                toBase64: f => new Promise((r, j) => {
+                    const rd = new FileReader(); rd.readAsDataURL(f);
+                    rd.onload = () => r(rd.result);
                 }),
-                formatCurrency: v => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(v)
+                formatCurrency: v => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(v),
+                deleteRecipe(id) { this.recipes = this.recipes.filter(r => r.id !== id); this.saveData(); }
             }
         }
     </script>
