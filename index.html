@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GastroLogic | v6.0 Robust Engine</title>
+    <title>GastroLogic | Industrial Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -12,36 +12,35 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #6366f1; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #6366f1; border-radius: 50%; width: 22px; height: 22px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .prose strong { color: #6366f1; font-weight: 800; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden" x-data="app()">
+<body class="bg-slate-50 text-slate-900 h-screen flex flex-col overflow-hidden" x-data="app()">
 
     <header class="bg-white px-5 py-4 flex justify-between items-center shadow-sm z-20 shrink-0 border-b border-slate-100">
         <div class="flex items-center gap-3">
-            <div class="bg-indigo-600 text-white p-2 rounded-xl"><i data-lucide="cpu" class="w-6 h-6"></i></div>
-            <h1 class="font-black text-xl tracking-tighter">GASTROLOGIC</h1>
+            <div class="bg-indigo-600 text-white p-2 rounded-xl"><i data-lucide="layout-grid" class="w-6 h-6"></i></div>
+            <h1 class="font-black text-xl tracking-tighter uppercase">GASTROLOGIC</h1>
         </div>
-        <div class="flex gap-2">
-            <div class="bg-orange-50 text-orange-600 px-3 py-1.5 rounded-full text-[10px] font-black border border-orange-100" x-text="calculateWeeklyCalories() + ' KCAL'"></div>
-            <div class="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-[10px] font-black border border-emerald-200" x-text="formatCurrency(calculateProjectedCost())"></div>
+        <div class="flex gap-2 font-bold uppercase text-[10px]">
+            <div class="bg-orange-50 text-orange-600 px-3 py-2 rounded-full border border-orange-100" x-text="calculateWeeklyCalories() + ' KCAL'"></div>
+            <div class="bg-emerald-50 text-emerald-700 px-3 py-2 rounded-full border border-emerald-200" x-text="formatCurrency(calculateProjectedCost())"></div>
         </div>
     </header>
 
-    <main class="flex-1 overflow-y-auto hide-scrollbar p-5 pb-28">
+    <main class="flex-1 overflow-y-auto hide-scrollbar p-5 pb-32">
         
         <div x-show="view === 'planner'" class="space-y-4">
             <div class="flex justify-between items-center">
-                <h2 class="font-black text-sm text-slate-400 uppercase tracking-widest">Planificación Semanal</h2>
-                <button @click="autoFillPlan" class="text-[10px] bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold">SUGERIR MENÚ</button>
+                <h2 class="font-black text-xs text-slate-400 uppercase tracking-widest">Planificación de Menú</h2>
+                <button @click="autoFillPlan" class="text-[10px] bg-slate-900 text-white px-4 py-2 rounded-lg font-bold">SUGERIR SEMANA</button>
             </div>
             <template x-for="(meals, day) in weeklyPlan" :key="day">
                 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                     <div class="flex justify-between items-center mb-3">
-                        <span class="font-black text-xs text-indigo-500 uppercase" x-text="day"></span>
-                        <button @click="addMealSlot(day)" class="text-slate-300"><i data-lucide="plus-circle" class="w-5 h-5"></i></button>
+                        <span class="font-black text-xs text-indigo-600 uppercase" x-text="day"></span>
+                        <button @click="addMealSlot(day)" class="text-slate-300 hover:text-indigo-600"><i data-lucide="plus-circle" class="w-5 h-5"></i></button>
                     </div>
                     <div class="space-y-2">
                         <template x-for="(meal, index) in meals" :key="index">
@@ -52,7 +51,7 @@
                                         <option :value="r.id" x-text="r.name"></option>
                                     </template>
                                 </select>
-                                <button @click="removeMealSlot(day, index)" class="text-slate-200"><i data-lucide="x-circle" class="w-4 h-4"></i></button>
+                                <button @click="removeMealSlot(day, index)" class="text-slate-200 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                             </div>
                         </template>
                     </div>
@@ -61,46 +60,44 @@
         </div>
 
         <div x-show="view === 'recipes'" class="space-y-4">
-            <div class="bg-slate-900 text-white rounded-3xl p-6 relative overflow-hidden shadow-xl">
-                <div class="absolute top-0 right-0 p-6 opacity-10"><i data-lucide="sparkles" class="w-24 h-24"></i></div>
-                <h3 class="font-black text-lg mb-1 uppercase italic">Importador AI</h3>
-                <p class="text-[9px] text-slate-500 mb-4 font-bold uppercase tracking-widest">Conexión Segura vía Google Proxy</p>
+            <div class="bg-indigo-700 text-white rounded-3xl p-6 relative overflow-hidden shadow-xl">
+                <h3 class="font-black text-lg mb-1 uppercase italic">Importador Técnico AI</h3>
+                <p class="text-[9px] text-indigo-300 mb-4 font-bold uppercase tracking-widest">Análisis de ingredientes por visión</p>
                 <div class="space-y-3 relative z-10">
-                    <input type="file" id="recipeFile" accept="image/*" class="text-[10px] w-full bg-white/10 rounded-xl p-3" @change="fileName = $event.target.files[0].name">
+                    <input type="file" id="recipeFile" accept="image/*" class="text-[10px] w-full bg-white/10 rounded-xl p-3">
                     <div class="flex gap-2">
-                        <input x-model="recipeInput" type="text" placeholder="Ej: Milanesa con puré" class="flex-1 bg-white/10 border-0 rounded-xl px-4 py-3 text-xs focus:ring-1 focus:ring-indigo-500">
-                        <button @click="importRecipeAI" class="bg-indigo-500 p-3 rounded-xl hover:bg-indigo-600 disabled:opacity-50" :disabled="isLoading">
-                            <div x-show="isLoading" class="loader"></div>
-                            <i x-show="!isLoading" data-lucide="camera" class="w-5 h-5 text-white"></i>
+                        <input x-model="recipeInput" type="text" placeholder="Ej: Pechuga con arroz" class="flex-1 bg-white/10 border-0 rounded-xl px-4 py-3 text-xs focus:ring-1 focus:ring-indigo-300">
+                        <button @click="importRecipeAI" class="bg-white text-indigo-700 p-3 rounded-xl hover:bg-indigo-50 disabled:opacity-50" :disabled="isLoading">
+                            <div x-show="isLoading" class="loader border-indigo-200 border-t-indigo-700"></div>
+                            <i x-show="!isLoading" data-lucide="sparkles" class="w-5 h-5"></i>
                         </button>
                     </div>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <template x-for="r in recipes" :key="r.id">
-                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm relative">
+                    <div class="bg-white p-3 rounded-2xl border border-slate-100 relative">
                         <button @click="deleteRecipe(r.id)" class="absolute top-1 right-1 text-red-200"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
                         <div class="h-20 bg-slate-50 rounded-xl mb-2 overflow-hidden">
-                            <img :src="r.image || 'https://placehold.co/200x200?text=Comida'" class="w-full h-full object-cover">
+                            <img :src="r.image || 'https://placehold.co/200x200?text=Plato'" class="w-full h-full object-cover">
                         </div>
-                        <p class="font-black text-[10px] uppercase truncate" x-text="r.name"></p>
-                        <p class="text-[9px] text-slate-400 font-bold" x-text="r.calories + ' CAL'"></p>
+                        <p class="font-black text-[10px] uppercase truncate text-slate-700" x-text="r.name"></p>
                     </div>
                 </template>
             </div>
         </div>
 
         <div x-show="view === 'shopping'" class="space-y-4">
-            <h2 class="font-bold text-xs uppercase text-slate-400 tracking-widest">Presupuesto y Faltantes</h2>
+            <h2 class="font-black text-xs uppercase text-slate-400 tracking-widest">Requerimientos de Compra</h2>
             <template x-for="item in shoppingList" :key="item.name">
                 <div class="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
                     <div>
                         <p class="font-black text-xs uppercase" x-text="item.name"></p>
-                        <p class="text-[9px] font-bold text-red-500 uppercase mt-0.5" x-text="'Faltan: ' + item.missing + ' ' + item.unit"></p>
+                        <p class="text-[9px] font-bold text-red-500 uppercase mt-0.5" x-text="'FALTAN: ' + item.missing + ' ' + item.unit"></p>
                     </div>
                     <div class="text-right">
                         <p class="font-black text-xs text-emerald-600" x-text="formatCurrency(item.cost)"></p>
-                        <p class="text-[8px] text-slate-300 font-bold uppercase">Proyectado</p>
+                        <p class="text-[8px] text-slate-300 font-bold uppercase tracking-tighter">PRESUPUESTO EST.</p>
                     </div>
                 </div>
             </template>
@@ -108,25 +105,25 @@
 
         <div x-show="view === 'stock'" class="space-y-4">
             <div class="flex justify-between items-center">
-                <h2 class="font-bold text-xs uppercase text-slate-400 tracking-widest">Inventario & Precios</h2>
-                <button @click="modalOpen = true" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-[10px] font-bold">NUEVO ITEM</button>
+                <h2 class="font-bold text-xs uppercase text-slate-400 tracking-widest">Inventario & Valorización</h2>
+                <button @click="modalOpen = true" class="bg-slate-900 text-white px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-tighter">+ Item</button>
             </div>
             <template x-for="item in inventory" :key="item.id">
                 <div class="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center">
                     <div class="flex-1">
                         <input x-model="item.nombre" @change="saveData" class="font-black text-xs uppercase bg-transparent w-full focus:outline-none">
-                        <p class="text-[10px] text-slate-400 font-bold mt-1" x-text="item.cantidad + ' ' + item.unit"></p>
+                        <p class="text-[10px] text-slate-400 font-bold mt-1 uppercase" x-text="item.cantidad + ' ' + item.unit"></p>
                     </div>
                     <div class="text-right">
                         <input x-model="item.precio" @change="saveData" type="number" class="w-20 text-right font-black text-xs text-emerald-600 border-b border-slate-100 focus:outline-none">
-                        <p class="text-[8px] text-slate-300 font-bold uppercase">Precio x <span x-text="item.unit"></span></p>
+                        <p class="text-[8px] text-slate-300 font-bold uppercase">PRECIO UNITARIO</p>
                     </div>
                 </div>
             </template>
         </div>
     </main>
 
-    <nav class="bg-white border-t border-slate-100 px-6 py-4 flex justify-between items-center shrink-0">
+    <nav class="bg-white border-t border-slate-100 px-6 py-4 flex justify-between items-center shrink-0 pb-safe z-30">
         <button @click="view = 'planner'" :class="view === 'planner' ? 'text-indigo-600' : 'text-slate-300'"><i data-lucide="calendar" class="w-6 h-6"></i></button>
         <button @click="view = 'recipes'" :class="view === 'recipes' ? 'text-indigo-600' : 'text-slate-300'"><i data-lucide="sparkles" class="w-6 h-6"></i></button>
         <button @click="view = 'shopping'" :class="view === 'shopping' ? 'text-indigo-600' : 'text-slate-300'"><i data-lucide="shopping-bag" class="w-6 h-6"></i></button>
@@ -135,15 +132,15 @@
 
     <div x-show="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" style="display:none">
         <div class="bg-white p-8 rounded-[32px] w-full max-w-sm">
-            <h3 class="font-black text-xl mb-6 uppercase tracking-tight">Agregar al Stock</h3>
+            <h3 class="font-black text-xl mb-6 uppercase tracking-tight">Agregar Material</h3>
             <div class="space-y-4">
-                <input x-model="newItem.nombre" placeholder="Nombre" class="w-full bg-slate-50 rounded-2xl p-4 text-xs font-bold uppercase border-0">
-                <input x-model="newItem.precio" type="number" placeholder="Precio ($)" class="w-full bg-slate-50 rounded-2xl p-4 text-xs font-bold border-0">
+                <input x-model="newItem.nombre" placeholder="Nombre (ej: Pollo)" class="w-full bg-slate-50 rounded-2xl p-4 text-xs font-bold uppercase border-0">
+                <input x-model="newItem.precio" type="number" placeholder="Costo Unitario ($)" class="w-full bg-slate-50 rounded-2xl p-4 text-xs font-bold border-0">
                 <div class="flex gap-2">
-                    <input x-model="newItem.cantidad" type="number" placeholder="Stock" class="w-full bg-slate-50 rounded-2xl p-4 text-xs font-bold border-0">
+                    <input x-model="newItem.cantidad" type="number" placeholder="Cantidad" class="w-full bg-slate-50 rounded-2xl p-4 text-xs font-bold border-0">
                     <select x-model="newItem.unit" class="w-full bg-slate-50 rounded-2xl p-4 text-xs font-bold border-0"><option>kg</option><option>u</option><option>L</option></select>
                 </div>
-                <button @click="addItem" class="w-full bg-indigo-600 text-white p-5 rounded-2xl font-black uppercase text-xs">Guardar</button>
+                <button @click="addItem" class="w-full bg-indigo-600 text-white p-5 rounded-2xl font-black uppercase text-xs">Cargar en Stock</button>
                 <button @click="modalOpen = false" class="w-full text-slate-300 font-bold p-2 text-[10px] uppercase">Cerrar</button>
             </div>
         </div>
@@ -152,32 +149,32 @@
     <script>
         function app() {
             return {
-                // TU URL DE GOOGLE APPS SCRIPT
-                gasUrl: 'https://script.google.com/macros/s/AKfycbwAZ1JXSAskNDfbPgOBnBAPwjLcMy8s2T6BdO6frtxrB_Tv6XmG2MC9--bp4x_n9fbtUg/exec', 
+                // ✅ URL ACTUALIZADA
+                gasUrl: 'https://script.google.com/macros/s/AKfycbwOmeoOZqenAAXzrWLAIeSfGVGv7Y65GDcV2mJfqZMe-JGLquJQ00AK4y622WniZvmmkA/exec', 
 
                 view: 'planner',
                 modalOpen: false,
                 isLoading: false,
                 recipeInput: '',
-                inventory: JSON.parse(localStorage.getItem('gl_stock_final')) || [],
-                recipes: JSON.parse(localStorage.getItem('gl_recipes_final')) || [],
-                weeklyPlan: JSON.parse(localStorage.getItem('gl_plan_final')) || { 'Lunes': [], 'Martes': [], 'Miércoles': [], 'Jueves': [], 'Viernes': [], 'Sábado': [], 'Domingo': [] },
+                inventory: JSON.parse(localStorage.getItem('gl_robust_v6')) || [],
+                recipes: JSON.parse(localStorage.getItem('gl_recipes_v6')) || [],
+                weeklyPlan: JSON.parse(localStorage.getItem('gl_plan_v6')) || { 'Lunes': [], 'Martes': [], 'Miércoles': [], 'Jueves': [], 'Viernes': [], 'Sábado': [], 'Domingo': [] },
                 newItem: { nombre: '', precio: '', cantidad: 0, unit: 'kg' },
 
                 init() { lucide.createIcons(); },
                 saveData() {
-                    localStorage.setItem('gl_stock_final', JSON.stringify(this.inventory));
-                    localStorage.setItem('gl_recipes_final', JSON.stringify(this.recipes));
-                    localStorage.setItem('gl_plan_final', JSON.stringify(this.weeklyPlan));
+                    localStorage.setItem('gl_robust_v6', JSON.stringify(this.inventory));
+                    localStorage.setItem('gl_recipes_v6', JSON.stringify(this.recipes));
+                    localStorage.setItem('gl_plan_v6', JSON.stringify(this.weeklyPlan));
                 },
 
-                // --- INTEGRACIÓN GEMINI ESTABLE ---
+                // IMPORTADOR AI INTEGRADO AL PROXY
                 async importRecipeAI() {
                     this.isLoading = true;
                     const file = document.getElementById('recipeFile').files[0];
                     try {
                         let contents = [{
-                            parts: [{ text: `Analiza este plato: "${this.recipeInput}". Devuelve estrictamente un JSON sin Markdown: {"name": "Nombre", "calories": 0, "ingredients": [{"name": "ingrediente", "qty": 1.0, "unit": "kg/u/L"}]}. Usa ingredientes genéricos que puedan estar en stock.` }]
+                            parts: [{ text: `Analiza: "${this.recipeInput}". Devuelve un JSON estricto (no markdown): {"name": "Nombre", "calories": 0, "ingredients": [{"name": "ingrediente", "qty": 1.0, "unit": "kg/u/L"}]}.` }]
                         }];
 
                         if (file) {
@@ -191,25 +188,20 @@
                         });
 
                         const data = await res.json();
-                        
-                        if(data.error) throw new Error(JSON.stringify(data.details));
-
                         const resultText = data.candidates[0].content.parts[0].text;
                         const recipe = JSON.parse(resultText.replace(/```json|```/g, '').trim());
                         
                         recipe.id = Date.now();
                         if (file) recipe.image = URL.createObjectURL(file);
-                        
                         this.recipes.push(recipe);
                         this.saveData();
                         this.recipeInput = '';
-                        alert("✅ Plato cargado con éxito.");
-                    } catch (e) { 
-                        console.error(e);
-                        alert("Error de Conexión. Revisa la consola o intenta de nuevo."); 
-                    } finally { this.isLoading = false; }
+                        alert("✅ Plato procesado y cargado.");
+                    } catch (e) { alert("Falla en la respuesta: " + e.message); }
+                    finally { this.isLoading = false; }
                 },
 
+                // LÓGICA FINANCIERA Y OPERATIVA
                 get shoppingList() {
                     const needs = {};
                     Object.values(this.weeklyPlan).flat().forEach(id => {
@@ -247,8 +239,7 @@
                 autoFillPlan() {
                     if (this.recipes.length < 1) return alert("Carga algunas recetas primero.");
                     Object.keys(this.weeklyPlan).forEach(d => {
-                        if (this.weeklyPlan[d].length === 0) this.weeklyPlan[d] = ["", ""];
-                        this.weeklyPlan[d] = this.weeklyPlan[d].map(() => this.recipes[Math.floor(Math.random() * this.recipes.length)].id);
+                        this.weeklyPlan[d] = [this.recipes[Math.floor(Math.random() * this.recipes.length)].id, this.recipes[Math.floor(Math.random() * this.recipes.length)].id];
                     });
                     this.saveData();
                 },
