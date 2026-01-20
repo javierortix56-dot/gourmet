@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GastroLogic Pro | Engine v2.0</title>
+    <title>GastroLogic | AI Powered</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -15,7 +16,6 @@
                 extend: {
                     colors: {
                         chef: { 500: '#FF6B6B', 600: '#EE5253' },
-                        sage: { 100: '#E8F5E9', 500: '#4CAF50', 600: '#388E3C' },
                         dark: '#2D3436',
                         light: '#F7F9FC'
                     },
@@ -28,8 +28,12 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .fade-in { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Markdown Styles para la respuesta de la IA */
+        .prose p { margin-bottom: 0.5rem; font-size: 0.85rem; line-height: 1.4; }
+        .prose ul { list-style-type: disc; padding-left: 1rem; margin-bottom: 0.5rem; }
+        .prose strong { color: #FF6B6B; font-weight: 800; }
+        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #FF6B6B; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-light text-dark h-screen flex flex-col overflow-hidden" x-data="app()">
@@ -37,50 +41,49 @@
     <header class="bg-white px-5 py-4 flex justify-between items-center shadow-sm z-20 shrink-0">
         <div class="flex items-center gap-3">
             <div class="bg-dark text-white p-2 rounded-xl">
-                <i data-lucide="cpu" class="w-5 h-5"></i>
+                <i data-lucide="brain-circuit" class="w-5 h-5"></i>
             </div>
             <div>
                 <h1 class="font-black text-lg leading-none tracking-tight">GastroLogic</h1>
-                <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mt-0.5">Sistema Integral</p>
+                <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mt-0.5">Gestión Inteligente</p>
             </div>
         </div>
-        <div class="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full">
-            <i data-lucide="dumbbell" class="w-3 h-3 text-chef-500"></i>
-            <span class="text-[10px] font-bold">Modo Hipertrofia</span>
+        <div class="bg-green-50 text-green-700 px-3 py-1 rounded-full text-[10px] font-bold border border-green-200 flex items-center gap-1">
+            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div> Online
         </div>
     </header>
 
     <main class="flex-1 overflow-y-auto hide-scrollbar relative p-4 pb-24">
         
-        <div x-show="view === 'stock'" class="fade-in space-y-4">
+        <div x-show="view === 'stock'" class="space-y-4">
             <div class="grid grid-cols-2 gap-3">
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="text-gray-400 text-[10px] font-bold uppercase">Valor Inventario</div>
+                    <div class="text-gray-400 text-[10px] font-bold uppercase">Costo Inventario</div>
                     <div class="text-2xl font-black text-dark mt-1" x-text="formatCurrency(totalInventoryValue)">$0</div>
                 </div>
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="text-chef-500 text-[10px] font-bold uppercase">Riesgo Vencimiento</div>
+                    <div class="text-chef-500 text-[10px] font-bold uppercase">Por Vencer (FIFO)</div>
                     <div class="text-2xl font-black text-chef-500 mt-1" x-text="inventory.filter(i => checkExpiry(i.vencimiento)).length">0</div>
                 </div>
             </div>
 
-            <h3 class="font-bold text-sm mt-2 text-gray-500">Inventario (Ordenado por Vencimiento)</h3>
+            <h3 class="font-bold text-sm mt-2 text-gray-500">Mi Alacena</h3>
             <div class="space-y-2">
                 <template x-for="item in sortedInventory" :key="item.id">
                     <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-lg shadow-inner" x-text="getIcon(item.categoria)">📦</div>
+                            <div class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-lg" x-text="getIcon(item.categoria)">📦</div>
                             <div>
                                 <h4 class="font-bold text-sm text-dark" x-text="item.nombre">Item</h4>
                                 <div class="flex gap-2 text-[10px]">
                                     <span class="text-gray-400" x-text="`${item.cantidad} ${item.unidad}`"></span>
-                                    <span class="font-bold text-green-600" x-text="formatCurrency(item.precio * item.cantidad)"></span>
+                                    <span class="font-bold text-green-600" x-text="'Unit: ' + formatCurrency(item.precio)"></span>
                                 </div>
                             </div>
                         </div>
                         <div class="text-right">
-                            <div x-show="checkExpiry(item.vencimiento)" class="flex items-center gap-1 text-[10px] font-bold text-chef-500 bg-red-50 px-2 py-1 rounded-lg mb-1">
-                                <i data-lucide="alert-circle" class="w-3 h-3"></i> Vence pronto
+                            <div x-show="checkExpiry(item.vencimiento)" class="flex items-center justify-end gap-1 text-[9px] font-bold text-chef-500 mb-1">
+                                <i data-lucide="clock" class="w-3 h-3"></i> Vence pronto
                             </div>
                             <div class="text-[10px] text-gray-400" x-text="item.vencimiento"></div>
                         </div>
@@ -93,61 +96,35 @@
             </button>
         </div>
 
-        <div x-show="view === 'recipes'" class="fade-in space-y-4">
+        <div x-show="view === 'ai'" class="space-y-4 h-full flex flex-col">
             
-            <div class="bg-dark rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
-                <div class="absolute top-0 right-0 p-4 opacity-10"><i data-lucide="brain-circuit" class="w-24 h-24"></i></div>
-                <h2 class="font-bold text-lg relative z-10 flex items-center gap-2"><i data-lucide="bot" class="w-5 h-5 text-chef-500"></i> AI Assistant</h2>
-                
-                <div class="mt-4 space-y-3 relative z-10 h-32 overflow-y-auto text-xs" id="chat-box">
-                    <div class="bg-white/10 p-2 rounded-lg rounded-tl-none self-start">
-                        Hola. Puedo optimizar tu cocina. Prueba escribiendo: <br>
-                        - "Tengo 120 minutos el domingo" (Batch Cooking)<br>
-                        - "Me sobró pollo y arroz" (Gestor Sobras)
-                    </div>
-                    <template x-for="msg in chatHistory">
-                        <div :class="msg.role === 'user' ? 'bg-chef-500 self-end ml-auto' : 'bg-white/10 self-start'" class="p-2 rounded-lg max-w-[85%] mb-2">
-                            <span x-text="msg.text"></span>
-                        </div>
-                    </template>
+            <div class="flex-1 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 overflow-y-auto mb-2" id="chat-container">
+                <div class="bg-gray-50 p-3 rounded-xl rounded-tl-none mb-3 text-xs text-gray-600">
+                    <p class="font-bold mb-1">👨‍🍳 Chef AI conectado a tu inventario.</p>
+                    <p>Prueba estas funcionalidades:</p>
+                    <ul class="list-disc pl-4 mt-1 space-y-1">
+                        <li><b>Batch Cooking:</b> "Tengo 2 horas el domingo, ¿qué cocino para la semana con lo que tengo?"</li>
+                        <li><b>Gestor de Sobras:</b> "Me sobró medio pollo y arroz, dame una idea."</li>
+                        <li><b>Planificación:</b> "¿Qué productos están por vencer y cómo los uso hoy?"</li>
+                    </ul>
                 </div>
 
-                <div class="mt-3 flex gap-2 relative z-10">
-                    <input x-model="chatInput" @keydown.enter="processAI" type="text" placeholder="Escribe aquí..." class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-chef-500">
-                    <button @click="processAI" class="bg-chef-500 text-white p-2 rounded-lg"><i data-lucide="send" class="w-5 h-5"></i></button>
-                </div>
-            </div>
-
-            <div class="flex gap-2 overflow-x-auto hide-scrollbar">
-                <button @click="filterMode = 'all'" :class="filterMode === 'all' ? 'bg-dark text-white' : 'bg-white text-gray-400'" class="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border border-gray-200">Todo</button>
-                <button @click="filterMode = 'high_protein'" :class="filterMode === 'high_protein' ? 'bg-chef-500 text-white' : 'bg-white text-gray-400'" class="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border border-gray-200">High Protein (>30g)</button>
-                <button @click="filterMode = 'low_carb'" :class="filterMode === 'low_carb' ? 'bg-sage-500 text-white' : 'bg-white text-gray-400'" class="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap border border-gray-200">Low Carb</button>
-            </div>
-
-            <div class="grid gap-3">
-                <template x-for="recipe in filteredRecipes" :key="recipe.id">
-                    <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex gap-3">
-                        <div class="w-20 h-20 bg-gray-200 rounded-lg shrink-0 overflow-hidden relative">
-                             <img :src="recipe.img" class="w-full h-full object-cover">
-                             <div class="absolute bottom-0 w-full bg-black/50 text-white text-[9px] font-bold text-center py-0.5" x-text="recipe.time + ' min'"></div>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex justify-between items-start">
-                                <h4 class="font-bold text-sm text-dark truncate" x-text="recipe.name"></h4>
-                                <span class="text-xs font-black text-green-600" x-text="formatCurrency(calculateRecipeCost(recipe))"></span>
-                            </div>
-                            
-                            <div class="flex gap-1 mt-1">
-                                <span class="text-[9px] font-bold px-1.5 py-0.5 bg-red-100 text-red-600 rounded" x-text="recipe.macros.protein + 'g Prot'"></span>
-                                <span class="text-[9px] font-bold px-1.5 py-0.5 bg-blue-100 text-blue-600 rounded" x-text="recipe.macros.carbs + 'g Carb'"></span>
-                            </div>
-
-                            <div class="mt-2 text-[10px] text-gray-400 truncate">
-                                Método: <span x-text="recipe.method"></span> | Fuego: <span x-text="recipe.hobs"></span>
-                            </div>
-                        </div>
+                <template x-for="msg in chatHistory">
+                    <div :class="msg.role === 'user' ? 'bg-dark text-white self-end ml-10' : 'bg-gray-100 text-dark self-start mr-10'" class="p-3 rounded-xl mb-3 text-xs shadow-sm">
+                        <div x-html="msg.html"></div>
                     </div>
                 </template>
+
+                <div x-show="isLoading" class="p-3 bg-gray-50 rounded-xl rounded-tl-none w-16">
+                    <div class="loader"></div>
+                </div>
+            </div>
+
+            <div class="relative shrink-0">
+                <input x-model="chatInput" @keydown.enter="sendMessage" type="text" placeholder="Escribe tu consulta al Chef..." class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-chef-500 shadow-lg shadow-gray-100">
+                <button @click="sendMessage" class="absolute right-2 top-2 bg-chef-500 text-white p-1.5 rounded-lg hover:bg-chef-600 transition-colors">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
             </div>
         </div>
 
@@ -158,36 +135,31 @@
             <i data-lucide="package" class="w-6 h-6"></i>
             <span class="text-[9px] font-bold uppercase">Stock</span>
         </button>
-        <button @click="view = 'recipes'" :class="view === 'recipes' ? 'text-dark' : 'text-gray-300'" class="flex flex-col items-center gap-1">
-            <i data-lucide="chef-hat" class="w-6 h-6"></i>
-            <span class="text-[9px] font-bold uppercase">Smart Chef</span>
-        </button>
-        <button class="flex flex-col items-center gap-1 text-gray-300">
-            <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
-            <span class="text-[9px] font-bold uppercase">Finanzas</span>
+        <button @click="view = 'ai'" :class="view === 'ai' ? 'text-dark' : 'text-gray-300'" class="flex flex-col items-center gap-1">
+            <i data-lucide="sparkles" class="w-6 h-6"></i>
+            <span class="text-[9px] font-bold uppercase">Chef AI</span>
         </button>
     </nav>
 
-    <div x-show="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center" style="display: none;">
-        <div class="absolute inset-0 bg-dark/60 backdrop-blur-sm" @click="modalOpen = false"></div>
-        <div class="bg-white w-full max-w-sm mx-4 rounded-3xl p-6 shadow-2xl relative z-10 fade-in">
-            <h3 class="font-black text-xl text-dark mb-4">Ingreso FIFO</h3>
+    <div x-show="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" style="display: none;">
+        <div class="bg-white w-full max-w-sm mx-4 rounded-3xl p-6 shadow-2xl relative">
+            <h3 class="font-black text-xl text-dark mb-4">Nuevo Producto</h3>
             <form @submit.prevent="addItem" class="space-y-3">
-                <input x-model="newItem.nombre" type="text" placeholder="Producto" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold" required>
-                
+                <input x-model="newItem.nombre" type="text" placeholder="Nombre (ej: Atún)" class="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-bold" required>
                 <div class="grid grid-cols-2 gap-3">
-                    <input x-model="newItem.precio" type="number" placeholder="$ Precio" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold" required>
-                    <input x-model="newItem.vencimiento" type="date" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold" required>
+                    <input x-model="newItem.precio" type="number" placeholder="$ Precio" class="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-bold" required>
+                    <input x-model="newItem.vencimiento" type="date" class="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-bold" required>
                 </div>
-
                 <div class="grid grid-cols-3 gap-3">
-                    <input x-model="newItem.cantidad" type="number" placeholder="Cant." class="col-span-2 w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-center" required>
-                    <select x-model="newItem.categoria" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-2 py-3 text-sm font-bold">
-                        <option>Carnes</option><option>Almacén</option><option>Lácteos</option><option>Verduras</option>
+                    <input x-model="newItem.cantidad" type="number" placeholder="Cant." class="col-span-2 w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-bold" required>
+                    <select x-model="newItem.categoria" class="w-full bg-gray-50 rounded-xl px-2 py-3 text-sm font-bold">
+                        <option>Almacén</option><option>Carnes</option><option>Lácteos</option><option>Verduras</option>
                     </select>
                 </div>
-
-                <button type="submit" class="w-full bg-dark text-white font-bold py-3 rounded-xl mt-2">Guardar y Calcular</button>
+                <div class="flex gap-2 mt-4">
+                    <button type="button" @click="modalOpen = false" class="flex-1 bg-gray-100 text-gray-500 font-bold py-3 rounded-xl">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-dark text-white font-bold py-3 rounded-xl">Guardar</button>
+                </div>
             </form>
         </div>
     </div>
@@ -195,160 +167,114 @@
     <script>
         function app() {
             return {
-                view: 'stock', // stock, recipes
+                // CLAVE API INTEGRADA
+                apiKey: 'AIzaSyAz0SPk6FpFks7wYjZkUPLzT2DCjT58adI', 
+                
+                view: 'stock',
                 modalOpen: false,
-                filterMode: 'all', // all, high_protein, low_carb
+                isLoading: false,
                 chatInput: '',
                 chatHistory: [],
                 
-                // 1. DATA STRUCTURES (Base de datos simulada)
+                // Inventario inicial
                 inventory: JSON.parse(localStorage.getItem('gl_inventory')) || [
-                    { id: 1, nombre: 'Pechuga Pollo', cantidad: 2, unidad: 'kg', precio: 4500, categoria: 'Carnes', vencimiento: '2026-01-25' },
-                    { id: 2, nombre: 'Arroz', cantidad: 1, unidad: 'kg', precio: 1200, categoria: 'Almacén', vencimiento: '2026-06-20' },
-                    { id: 3, nombre: 'Huevos', cantidad: 12, unidad: 'u', precio: 3000, categoria: 'Lácteos', vencimiento: '2026-01-22' }
+                    { id: 1, nombre: 'Pechuga Pollo', cantidad: 2, unidad: 'kg', precio: 5000, categoria: 'Carnes', vencimiento: '2025-02-15' },
+                    { id: 2, nombre: 'Arroz', cantidad: 1, unidad: 'kg', precio: 1500, categoria: 'Almacén', vencimiento: '2025-06-20' },
+                    { id: 3, nombre: 'Crema de Leche', cantidad: 1, unidad: 'u', precio: 2500, categoria: 'Lácteos', vencimiento: '2025-01-25' } 
                 ],
-                
                 newItem: { nombre: '', precio: '', cantidad: 1, unidad: 'u', categoria: 'Almacén', vencimiento: '' },
-
-                // Base de datos de Recetas con MACROS y DATOS TÉCNICOS para Batch Cooking
-                recipesDB: [
-                    { 
-                        id: 1, name: 'Pollo al Horno c/ Papas', 
-                        img: 'https://images.unsplash.com/photo-1598103442097-8b74394b95c6?auto=format&fit=crop&w=200&q=80',
-                        ingredients: ['Pechuga Pollo', 'Papas'], 
-                        baseCost: 200, // Costo base (especies, aceite)
-                        time: 45, method: 'Horno', hobs: 0,
-                        macros: { protein: 45, carbs: 30, fat: 10 } 
-                    },
-                    { 
-                        id: 2, name: 'Arroz con Huevo (Post-Workout)', 
-                        img: 'https://images.unsplash.com/photo-1554117861-122986f3b063?auto=format&fit=crop&w=200&q=80',
-                        ingredients: ['Arroz', 'Huevos'], 
-                        baseCost: 50,
-                        time: 15, method: 'Fuego', hobs: 1,
-                        macros: { protein: 14, carbs: 40, fat: 12 } 
-                    },
-                    { 
-                        id: 3, name: 'Omelette Proteico', 
-                        img: 'https://images.unsplash.com/photo-1510693206972-df098062cb71?auto=format&fit=crop&w=200&q=80',
-                        ingredients: ['Huevos', 'Pechuga Pollo'], 
-                        baseCost: 50,
-                        time: 10, method: 'Fuego', hobs: 1,
-                        macros: { protein: 35, carbs: 2, fat: 15 } 
-                    }
-                ],
 
                 init() {
                     lucide.createIcons();
                     this.$watch('inventory', val => localStorage.setItem('gl_inventory', JSON.stringify(val)));
                 },
 
-                // 2. LOGIC: COSTO POR PLATO
-                // Cruza los ingredientes de la receta con el precio promedio en inventario
-                calculateRecipeCost(recipe) {
-                    let total = recipe.baseCost;
-                    recipe.ingredients.forEach(ingName => {
-                        const stockItem = this.inventory.find(i => i.nombre.toLowerCase().includes(ingName.toLowerCase().split(' ')[0]));
-                        if (stockItem) {
-                            // Estimación simple: asume usar 25% del paquete por porción para el demo
-                            total += (stockItem.precio / stockItem.cantidad) * 0.25; 
-                        }
-                    });
-                    return total;
+                // 1. LÓGICA FINANCIERA (Costo por Plato / Valor Stock)
+                get totalInventoryValue() {
+                    return this.inventory.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
                 },
 
-                // 3. LOGIC: ESCÁNER FIFO (First In, First Out)
+                // 2. LÓGICA FIFO (Escáner Vencimientos)
                 get sortedInventory() {
                     return this.inventory.sort((a, b) => new Date(a.vencimiento) - new Date(b.vencimiento));
                 },
-
                 checkExpiry(dateStr) {
                     const diff = new Date(dateStr) - new Date();
                     return (diff / (1000 * 60 * 60 * 24)) <= 5; // Alerta 5 días
                 },
 
-                get totalInventoryValue() {
-                    return this.inventory.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
-                },
-
-                // 4. LOGIC: PERFILES DE DIETA DINÁMICOS
-                get filteredRecipes() {
-                    if (this.filterMode === 'high_protein') return this.recipesDB.filter(r => r.macros.protein > 30);
-                    if (this.filterMode === 'low_carb') return this.recipesDB.filter(r => r.macros.carbs < 20);
-                    return this.recipesDB;
-                },
-
+                // CRUD
                 addItem() {
                     this.inventory.push({ ...this.newItem, id: Date.now() });
                     this.modalOpen = false;
-                    this.newItem = { nombre: '', precio: '', cantidad: 1, vencimiento: '', categoria: 'Almacén' };
+                    this.newItem = { nombre: '', precio: '', cantidad: 1, unidad: 'u', categoria: 'Almacén', vencimiento: '' };
                     lucide.createIcons();
                 },
-
-                // 5. LOGIC: AI SIMULATOR (BATCH COOKING & LEFTOVERS)
-                processAI() {
-                    if (!this.chatInput) return;
-                    
-                    const input = this.chatInput.toLowerCase();
-                    this.chatHistory.push({ role: 'user', text: this.chatInput });
-                    
-                    let response = "No estoy seguro. Prueba con 'sobró arroz' o 'tengo 60 min'.";
-
-                    // A. Batch Cooking Optimizer Logic
-                    if (input.includes('minutos') || input.includes('tiempo') || input.includes('domingo')) {
-                        const mins = parseInt(input.match(/\d+/)) || 60;
-                        const possible = this.recipesDB.filter(r => r.time <= mins);
-                        
-                        // Algoritmo de paralelismo simple
-                        const horno = possible.filter(r => r.method === 'Horno');
-                        const fuego = possible.filter(r => r.method === 'Fuego');
-                        
-                        response = `🤖 <b>Plan Batch Cooking (${mins} min):</b><br>`;
-                        if (horno.length) response += `🔸 <b>Horno:</b> Mientras cocinas ${horno[0].name}...<br>`;
-                        if (fuego.length) response += `🔸 <b>Fuego:</b> Puedes hacer ${fuego[0].name} simultáneamente.<br>`;
-                        response += `✅ Ahorras aprox. 30% de gas cocinando en paralelo.`;
-                    }
-                    
-                    // B. Gestor de Sobras (Inventory Salvage)
-                    else if (input.includes('sobra') || input.includes('sobró') || input.includes('tengo')) {
-                        const keywords = input.split(' ');
-                        const matches = this.recipesDB.filter(r => 
-                            keywords.some(k => r.name.toLowerCase().includes(k) || r.ingredients.some(i => i.toLowerCase().includes(k)))
-                        );
-                        
-                        if (matches.length > 0) {
-                            response = `💡 Con esas sobras puedes preparar: <b>${matches[0].name}</b>. Te aportará ${matches[0].macros.protein}g de proteína.`;
-                        } else {
-                            response = "⚠️ No encontré recetas exactas, pero te sugiero hacer un salteado con verduras para no desperdiciar.";
-                        }
-                    }
-
-                    // C. Escáner Vencimientos (Trigger manual)
-                    else if (input.includes('vence') || input.includes('revisar')) {
-                        const expiring = this.inventory.filter(i => this.checkExpiry(i.vencimiento));
-                        if(expiring.length > 0) {
-                            response = `🚨 Atención: Tienes <b>${expiring.length} productos</b> por vencer. Prioriza usar: ${expiring[0].nombre}.`;
-                        } else {
-                            response = "✅ Tu stock está fresco. Nada vence en los próximos 5 días.";
-                        }
-                    }
-
-                    setTimeout(() => {
-                        this.chatHistory.push({ role: 'ai', text: response });
-                        const chatBox = document.getElementById('chat-box');
-                        chatBox.scrollTop = chatBox.scrollHeight;
-                    }, 500);
-                    
-                    this.chatInput = '';
-                },
-
                 formatCurrency(val) {
                     return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
                 },
-                
-                getIcon(cat) {
-                    const map = { 'Carnes': '🥩', 'Verduras': '🥦', 'Lácteos': '🧀', 'Almacén': '🥫' };
-                    return map[cat] || '📦';
+                getIcon(cat) { return { 'Carnes': '🥩', 'Verduras': '🥦', 'Lácteos': '🧀', 'Almacén': '🥫' }[cat] || '📦'; },
+
+                // 3. CONEXIÓN CON GEMINI (Batch Cooking & Sobras)
+                async sendMessage() {
+                    if (!this.chatInput || !this.apiKey) return;
+                    
+                    const userText = this.chatInput;
+                    this.chatHistory.push({ role: 'user', html: userText });
+                    this.chatInput = '';
+                    this.isLoading = true;
+                    this.scrollToBottom();
+
+                    // Preparamos el contexto para que Gemini sea "Inteligente"
+                    const inventoryContext = this.inventory.map(i => 
+                        `- ${i.nombre}: ${i.cantidad} ${i.unidad} (Vence: ${i.vencimiento})`
+                    ).join('\n');
+
+                    const prompt = `
+                        Actúa como un Chef experto en gestión de hogar y Batch Cooking.
+                        
+                        MI INVENTARIO ACTUAL:
+                        ${inventoryContext}
+                        
+                        PREGUNTA DEL USUARIO:
+                        "${userText}"
+                        
+                        INSTRUCCIONES:
+                        1. Si el usuario pide "Batch Cooking", crea un plan paso a paso optimizando tiempos.
+                        2. Si pide "Receta de sobras", usa SOLO lo que hay en el inventario.
+                        3. Sé breve, usa formato Markdown (negritas, listas).
+                        4. Si hay productos por vencer (mira las fechas en el inventario), priorízalos en la sugerencia.
+                    `;
+
+                    try {
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                        });
+
+                        const data = await response.json();
+                        
+                        if (data.error) {
+                             throw new Error(data.error.message);
+                        }
+
+                        const aiText = data.candidates[0].content.parts[0].text;
+                        this.chatHistory.push({ role: 'ai', html: marked.parse(aiText) });
+                    } catch (error) {
+                        console.error(error);
+                        this.chatHistory.push({ role: 'ai', html: `<span class="text-red-500 font-bold">Error: ${error.message}. Revisa la consola.</span>` });
+                    } finally {
+                        this.isLoading = false;
+                        this.scrollToBottom();
+                    }
+                },
+
+                scrollToBottom() {
+                    setTimeout(() => {
+                        const container = document.getElementById('chat-container');
+                        container.scrollTop = container.scrollHeight;
+                    }, 100);
                 }
             }
         }
