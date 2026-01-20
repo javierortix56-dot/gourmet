@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GastroLogic | AI Powered</title>
+    <title>GastroLogic | Planner 360</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -16,6 +16,7 @@
                 extend: {
                     colors: {
                         chef: { 500: '#FF6B6B', 600: '#EE5253' },
+                        sage: { 500: '#4CAF50' },
                         dark: '#2D3436',
                         light: '#F7F9FC'
                     },
@@ -28,253 +29,392 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
-        /* Markdown Styles para la respuesta de la IA */
-        .prose p { margin-bottom: 0.5rem; font-size: 0.85rem; line-height: 1.4; }
-        .prose ul { list-style-type: disc; padding-left: 1rem; margin-bottom: 0.5rem; }
-        .prose strong { color: #FF6B6B; font-weight: 800; }
-        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #FF6B6B; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; }
+        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #FF6B6B; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-light text-dark h-screen flex flex-col overflow-hidden" x-data="app()">
 
-    <header class="bg-white px-5 py-4 flex justify-between items-center shadow-sm z-20 shrink-0">
-        <div class="flex items-center gap-3">
-            <div class="bg-dark text-white p-2 rounded-xl">
-                <i data-lucide="brain-circuit" class="w-5 h-5"></i>
-            </div>
-            <div>
-                <h1 class="font-black text-lg leading-none tracking-tight">GastroLogic</h1>
-                <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mt-0.5">Gestión Inteligente</p>
-            </div>
+    <header class="bg-white px-4 py-3 flex justify-between items-center shadow-sm z-20 shrink-0">
+        <div class="flex items-center gap-2">
+            <div class="bg-dark text-white p-2 rounded-lg"><i data-lucide="chef-hat" class="w-5 h-5"></i></div>
+            <h1 class="font-black text-lg tracking-tight">GastroLogic</h1>
         </div>
-        <div class="bg-green-50 text-green-700 px-3 py-1 rounded-full text-[10px] font-bold border border-green-200 flex items-center gap-1">
-            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div> Online
+        <div class="flex gap-2">
+            <div class="bg-chef-50 text-chef-600 px-3 py-1 rounded-full text-[10px] font-bold border border-chef-100 flex items-center gap-1">
+                🔥 <span x-text="calculateWeeklyCalories() + ' kcal/sem'"></span>
+            </div>
+            <div class="bg-green-50 text-green-700 px-3 py-1 rounded-full text-[10px] font-bold border border-green-200 flex items-center gap-1">
+                💰 <span x-text="formatCurrency(calculateProjectedCost())"></span>
+            </div>
         </div>
     </header>
 
     <main class="flex-1 overflow-y-auto hide-scrollbar relative p-4 pb-24">
-        
-        <div x-show="view === 'stock'" class="space-y-4">
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="text-gray-400 text-[10px] font-bold uppercase">Costo Inventario</div>
-                    <div class="text-2xl font-black text-dark mt-1" x-text="formatCurrency(totalInventoryValue)">$0</div>
-                </div>
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="text-chef-500 text-[10px] font-bold uppercase">Por Vencer (FIFO)</div>
-                    <div class="text-2xl font-black text-chef-500 mt-1" x-text="inventory.filter(i => checkExpiry(i.vencimiento)).length">0</div>
+
+        <div x-show="view === 'planner'" class="space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="font-bold text-lg">Menú Semanal</h2>
+                <button @click="autoFillPlan" class="text-xs bg-dark text-white px-3 py-1.5 rounded-lg font-bold flex items-center gap-1">
+                    <i data-lucide="sparkles" class="w-3 h-3"></i> Auto-Sugerir
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <template x-for="(meals, day) in weeklyPlan" :key="day">
+                    <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-black text-sm text-chef-500 uppercase" x-text="day"></span>
+                            <button @click="addMealSlot(day)" class="text-gray-400 hover:text-dark"><i data-lucide="plus-circle" class="w-4 h-4"></i></button>
+                        </div>
+                        <div class="space-y-2">
+                            <template x-for="(meal, index) in meals" :key="index">
+                                <div class="flex items-center gap-2">
+                                    <select x-model="weeklyPlan[day][index]" @change="saveData" class="flex-1 bg-gray-50 border border-gray-200 text-xs rounded-lg p-2 font-medium">
+                                        <option value="">-- Seleccionar Receta --</option>
+                                        <template x-for="r in recipes" :key="r.id">
+                                            <option :value="r.id" x-text="r.name + ' (' + r.calories + ' kcal)'"></option>
+                                        </template>
+                                    </select>
+                                    <button @click="removeMealSlot(day, index)" class="text-red-300"><i data-lucide="x" class="w-3 h-3"></i></button>
+                                </div>
+                            </template>
+                            <div x-show="meals.length === 0" class="text-[10px] text-gray-300 italic text-center py-1">Sin comidas planificadas</div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <div x-show="view === 'recipes'" class="space-y-4">
+            
+            <div class="bg-dark text-white rounded-2xl p-5 relative overflow-hidden shadow-lg">
+                <div class="absolute top-0 right-0 p-4 opacity-10"><i data-lucide="camera" class="w-24 h-24"></i></div>
+                <h3 class="font-bold text-lg relative z-10">Agregar Nueva Receta</h3>
+                <p class="text-xs text-gray-400 mb-3 relative z-10">Sube una foto o escribe el nombre. Gemini extraerá ingredientes y calorías.</p>
+                
+                <div class="space-y-2 relative z-10">
+                    <input type="file" id="recipeImage" accept="image/*" class="text-xs w-full bg-white/10 rounded-lg p-2 file:bg-chef-500 file:border-0 file:rounded file:text-white file:text-xs file:font-bold file:px-2">
+                    <div class="flex gap-2">
+                        <input x-model="newRecipeInput" type="text" placeholder="O escribe el plato (ej: Milanesa con puré)" class="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
+                        <button @click="analyzeRecipeAI" class="bg-chef-500 p-2 rounded-lg disabled:opacity-50" :disabled="isLoading">
+                            <i x-show="!isLoading" data-lucide="arrow-right" class="w-5 h-5"></i>
+                            <div x-show="isLoading" class="loader w-4 h-4 border-white border-t-transparent"></div>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <h3 class="font-bold text-sm mt-2 text-gray-500">Mi Alacena</h3>
+            <h3 class="font-bold text-sm mt-2 text-gray-500">Mi Biblioteca (<span x-text="recipes.length"></span>)</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <template x-for="r in recipes" :key="r.id">
+                    <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm relative group">
+                        <button @click="deleteRecipe(r.id)" class="absolute top-2 right-2 text-red-300 bg-white rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                        <div class="h-20 w-full bg-gray-100 rounded-lg mb-2 overflow-hidden">
+                            <img :src="r.image || 'https://placehold.co/400x300/e2e8f0/cbd5e1?text=Receta'" class="w-full h-full object-cover">
+                        </div>
+                        <h4 class="font-bold text-xs truncate" x-text="r.name"></h4>
+                        <div class="flex justify-between mt-1 text-[10px] text-gray-400">
+                            <span x-text="r.calories + ' kcal'"></span>
+                            <span x-text="r.ingredients.length + ' ing.'"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <div x-show="view === 'shopping'" class="space-y-4">
+            <h2 class="font-bold text-lg">Lista de Compras</h2>
+            <div class="bg-green-50 p-4 rounded-xl border border-green-100 flex justify-between items-center">
+                <div>
+                    <div class="text-[10px] uppercase font-bold text-green-700">Presupuesto Estimado</div>
+                    <div class="text-2xl font-black text-green-800" x-text="formatCurrency(shoppingListCost)"></div>
+                </div>
+                <div class="text-right">
+                    <div class="text-[10px] text-green-600">Basado en plan semanal</div>
+                </div>
+            </div>
+
             <div class="space-y-2">
-                <template x-for="item in sortedInventory" :key="item.id">
+                <template x-for="item in shoppingList" :key="item.name">
                     <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-lg" x-text="getIcon(item.categoria)">📦</div>
-                            <div>
-                                <h4 class="font-bold text-sm text-dark" x-text="item.nombre">Item</h4>
-                                <div class="flex gap-2 text-[10px]">
-                                    <span class="text-gray-400" x-text="`${item.cantidad} ${item.unidad}`"></span>
-                                    <span class="font-bold text-green-600" x-text="'Unit: ' + formatCurrency(item.precio)"></span>
-                                </div>
+                        <div>
+                            <div class="font-bold text-sm text-dark" x-text="item.name"></div>
+                            <div class="text-[10px]">
+                                <span class="text-chef-500 font-bold" x-show="item.missing > 0">Faltan: <span x-text="item.missing + ' ' + item.unit"></span></span>
+                                <span class="text-green-500 font-bold ml-2" x-show="item.missing > 0" x-text="'Est: ' + formatCurrency(item.cost)"></span>
+                                <span class="text-gray-400 ml-1" x-show="item.stock > 0">(Tienes: <span x-text="item.stock"></span>)</span>
+                            </div>
+                        </div>
+                        <input type="checkbox" class="w-5 h-5 rounded text-chef-500 border-gray-300">
+                    </div>
+                </template>
+                <div x-show="shoppingList.length === 0" class="text-center py-10 opacity-50 text-xs">Agrega recetas al plan para generar la lista</div>
+            </div>
+        </div>
+
+        <div x-show="view === 'stock'" class="space-y-4">
+             <div class="flex justify-between items-center">
+                <h2 class="font-bold text-lg">Inventario & Precios</h2>
+                <button @click="modalOpen = true" class="bg-dark text-white px-3 py-1 text-xs rounded-full font-bold">+ Item</button>
+            </div>
+            
+            <div class="space-y-2">
+                <template x-for="item in inventory" :key="item.id">
+                    <div class="bg-white p-3 rounded-xl border border-gray-100 flex justify-between items-center">
+                        <div class="flex-1">
+                            <input x-model="item.nombre" class="font-bold text-sm text-dark bg-transparent w-full focus:outline-none">
+                            <div class="flex gap-2 text-[10px] mt-1">
+                                <span class="bg-gray-100 px-1 rounded" x-text="item.cantidad + ' ' + item.unidad"></span>
                             </div>
                         </div>
                         <div class="text-right">
-                            <div x-show="checkExpiry(item.vencimiento)" class="flex items-center justify-end gap-1 text-[9px] font-bold text-chef-500 mb-1">
-                                <i data-lucide="clock" class="w-3 h-3"></i> Vence pronto
+                            <div class="flex items-center gap-1">
+                                <span class="text-xs text-gray-400">$</span>
+                                <input x-model="item.precio" @change="saveData" type="number" class="w-16 text-right font-bold text-sm border-b border-gray-200 focus:outline-none focus:border-chef-500">
                             </div>
-                            <div class="text-[10px] text-gray-400" x-text="item.vencimiento"></div>
+                            <div class="text-[9px] text-gray-400">por <span x-text="item.unidad"></span></div>
                         </div>
                     </div>
                 </template>
-            </div>
-            
-            <button @click="modalOpen = true" class="fixed bottom-24 right-5 bg-dark text-white p-4 rounded-full shadow-xl z-30 hover:scale-105 transition-transform">
-                <i data-lucide="plus" class="w-6 h-6"></i>
-            </button>
-        </div>
-
-        <div x-show="view === 'ai'" class="space-y-4 h-full flex flex-col">
-            
-            <div class="flex-1 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 overflow-y-auto mb-2" id="chat-container">
-                <div class="bg-gray-50 p-3 rounded-xl rounded-tl-none mb-3 text-xs text-gray-600">
-                    <p class="font-bold mb-1">👨‍🍳 Chef AI conectado a tu inventario.</p>
-                    <p>Prueba estas funcionalidades:</p>
-                    <ul class="list-disc pl-4 mt-1 space-y-1">
-                        <li><b>Batch Cooking:</b> "Tengo 2 horas el domingo, ¿qué cocino para la semana con lo que tengo?"</li>
-                        <li><b>Gestor de Sobras:</b> "Me sobró medio pollo y arroz, dame una idea."</li>
-                        <li><b>Planificación:</b> "¿Qué productos están por vencer y cómo los uso hoy?"</li>
-                    </ul>
-                </div>
-
-                <template x-for="msg in chatHistory">
-                    <div :class="msg.role === 'user' ? 'bg-dark text-white self-end ml-10' : 'bg-gray-100 text-dark self-start mr-10'" class="p-3 rounded-xl mb-3 text-xs shadow-sm">
-                        <div x-html="msg.html"></div>
-                    </div>
-                </template>
-
-                <div x-show="isLoading" class="p-3 bg-gray-50 rounded-xl rounded-tl-none w-16">
-                    <div class="loader"></div>
-                </div>
-            </div>
-
-            <div class="relative shrink-0">
-                <input x-model="chatInput" @keydown.enter="sendMessage" type="text" placeholder="Escribe tu consulta al Chef..." class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-chef-500 shadow-lg shadow-gray-100">
-                <button @click="sendMessage" class="absolute right-2 top-2 bg-chef-500 text-white p-1.5 rounded-lg hover:bg-chef-600 transition-colors">
-                    <i data-lucide="send" class="w-4 h-4"></i>
-                </button>
             </div>
         </div>
 
     </main>
 
     <nav class="bg-white border-t border-gray-100 px-6 py-3 flex justify-between items-center shrink-0 z-40 pb-safe">
+        <button @click="view = 'planner'" :class="view === 'planner' ? 'text-dark' : 'text-gray-300'" class="flex flex-col items-center gap-1">
+            <i data-lucide="calendar-days" class="w-6 h-6"></i>
+            <span class="text-[9px] font-bold uppercase">Plan</span>
+        </button>
+        <button @click="view = 'recipes'" :class="view === 'recipes' ? 'text-dark' : 'text-gray-300'" class="flex flex-col items-center gap-1">
+            <i data-lucide="book-open" class="w-6 h-6"></i>
+            <span class="text-[9px] font-bold uppercase">Recetas</span>
+        </button>
+        <button @click="view = 'shopping'" :class="view === 'shopping' ? 'text-dark' : 'text-gray-300'" class="flex flex-col items-center gap-1">
+            <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+            <span class="text-[9px] font-bold uppercase">Compra</span>
+        </button>
         <button @click="view = 'stock'" :class="view === 'stock' ? 'text-dark' : 'text-gray-300'" class="flex flex-col items-center gap-1">
             <i data-lucide="package" class="w-6 h-6"></i>
             <span class="text-[9px] font-bold uppercase">Stock</span>
         </button>
-        <button @click="view = 'ai'" :class="view === 'ai' ? 'text-dark' : 'text-gray-300'" class="flex flex-col items-center gap-1">
-            <i data-lucide="sparkles" class="w-6 h-6"></i>
-            <span class="text-[9px] font-bold uppercase">Chef AI</span>
-        </button>
     </nav>
 
-    <div x-show="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" style="display: none;">
-        <div class="bg-white w-full max-w-sm mx-4 rounded-3xl p-6 shadow-2xl relative">
-            <h3 class="font-black text-xl text-dark mb-4">Nuevo Producto</h3>
-            <form @submit.prevent="addItem" class="space-y-3">
-                <input x-model="newItem.nombre" type="text" placeholder="Nombre (ej: Atún)" class="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-bold" required>
-                <div class="grid grid-cols-2 gap-3">
-                    <input x-model="newItem.precio" type="number" placeholder="$ Precio" class="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-bold" required>
-                    <input x-model="newItem.vencimiento" type="date" class="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-bold" required>
-                </div>
-                <div class="grid grid-cols-3 gap-3">
-                    <input x-model="newItem.cantidad" type="number" placeholder="Cant." class="col-span-2 w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-bold" required>
-                    <select x-model="newItem.categoria" class="w-full bg-gray-50 rounded-xl px-2 py-3 text-sm font-bold">
-                        <option>Almacén</option><option>Carnes</option><option>Lácteos</option><option>Verduras</option>
-                    </select>
-                </div>
-                <div class="flex gap-2 mt-4">
-                    <button type="button" @click="modalOpen = false" class="flex-1 bg-gray-100 text-gray-500 font-bold py-3 rounded-xl">Cancelar</button>
-                    <button type="submit" class="flex-1 bg-dark text-white font-bold py-3 rounded-xl">Guardar</button>
-                </div>
-            </form>
+    <div x-show="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" style="display:none">
+        <div class="bg-white p-6 rounded-2xl w-80">
+            <h3 class="font-bold mb-4">Nuevo Producto</h3>
+            <input x-model="newItem.nombre" placeholder="Nombre" class="w-full border rounded p-2 mb-2">
+            <input x-model="newItem.precio" type="number" placeholder="Precio" class="w-full border rounded p-2 mb-2">
+            <div class="flex gap-2">
+                <input x-model="newItem.cantidad" type="number" placeholder="Cant" class="w-full border rounded p-2">
+                <select x-model="newItem.unidad" class="w-full border rounded p-2"><option>u</option><option>kg</option><option>L</option></select>
+            </div>
+            <button @click="addItem" class="w-full bg-dark text-white p-3 rounded-xl mt-4 font-bold">Guardar</button>
         </div>
     </div>
 
     <script>
         function app() {
             return {
-                // CLAVE API INTEGRADA
                 apiKey: 'AIzaSyAz0SPk6FpFks7wYjZkUPLzT2DCjT58adI', 
-                
-                view: 'stock',
+                view: 'planner',
                 modalOpen: false,
                 isLoading: false,
-                chatInput: '',
-                chatHistory: [],
+                newRecipeInput: '',
                 
-                // Inventario inicial
+                // --- STATE ---
                 inventory: JSON.parse(localStorage.getItem('gl_inventory')) || [
-                    { id: 1, nombre: 'Pechuga Pollo', cantidad: 2, unidad: 'kg', precio: 5000, categoria: 'Carnes', vencimiento: '2025-02-15' },
-                    { id: 2, nombre: 'Arroz', cantidad: 1, unidad: 'kg', precio: 1500, categoria: 'Almacén', vencimiento: '2025-06-20' },
-                    { id: 3, nombre: 'Crema de Leche', cantidad: 1, unidad: 'u', precio: 2500, categoria: 'Lácteos', vencimiento: '2025-01-25' } 
+                    { id: 1, nombre: 'Pollo', cantidad: 2, unidad: 'kg', precio: 5000 },
+                    { id: 2, nombre: 'Arroz', cantidad: 1, unidad: 'kg', precio: 1500 },
+                    { id: 3, nombre: 'Huevos', cantidad: 6, unidad: 'u', precio: 200 } // precio x unidad
                 ],
-                newItem: { nombre: '', precio: '', cantidad: 1, unidad: 'u', categoria: 'Almacén', vencimiento: '' },
+                
+                recipes: JSON.parse(localStorage.getItem('gl_recipes')) || [],
+                
+                weeklyPlan: JSON.parse(localStorage.getItem('gl_plan')) || {
+                    'Lunes': [], 'Martes': [], 'Miércoles': [], 'Jueves': [], 'Viernes': [], 'Sábado': [], 'Domingo': []
+                },
+
+                newItem: { nombre: '', precio: '', cantidad: 1, unidad: 'u' },
 
                 init() {
                     lucide.createIcons();
-                    this.$watch('inventory', val => localStorage.setItem('gl_inventory', JSON.stringify(val)));
+                    this.$watch('inventory', () => this.saveData());
+                    this.$watch('recipes', () => this.saveData());
+                    this.$watch('weeklyPlan', () => this.saveData());
                 },
 
-                // 1. LÓGICA FINANCIERA (Costo por Plato / Valor Stock)
-                get totalInventoryValue() {
-                    return this.inventory.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+                saveData() {
+                    localStorage.setItem('gl_inventory', JSON.stringify(this.inventory));
+                    localStorage.setItem('gl_recipes', JSON.stringify(this.recipes));
+                    localStorage.setItem('gl_plan', JSON.stringify(this.weeklyPlan));
                 },
 
-                // 2. LÓGICA FIFO (Escáner Vencimientos)
-                get sortedInventory() {
-                    return this.inventory.sort((a, b) => new Date(a.vencimiento) - new Date(b.vencimiento));
+                // --- 1. GESTIÓN PLANIFICADOR ---
+                addMealSlot(day) { this.weeklyPlan[day].push(""); },
+                removeMealSlot(day, index) { this.weeklyPlan[day].splice(index, 1); },
+                
+                autoFillPlan() {
+                    if (this.recipes.length === 0) return alert("¡Agrega recetas primero!");
+                    const days = Object.keys(this.weeklyPlan);
+                    days.forEach(day => {
+                        // Si el día está vacío, agrega 2 comidas (Almuerzo/Cena)
+                        if (this.weeklyPlan[day].length === 0) {
+                            this.weeklyPlan[day].push(this.getRandomRecipeId());
+                            this.weeklyPlan[day].push(this.getRandomRecipeId());
+                        } else {
+                            // Rellena los slots vacíos existentes
+                            this.weeklyPlan[day] = this.weeklyPlan[day].map(slot => slot === "" ? this.getRandomRecipeId() : slot);
+                        }
+                    });
                 },
-                checkExpiry(dateStr) {
-                    const diff = new Date(dateStr) - new Date();
-                    return (diff / (1000 * 60 * 60 * 24)) <= 5; // Alerta 5 días
+                getRandomRecipeId() {
+                    return this.recipes[Math.floor(Math.random() * this.recipes.length)].id;
                 },
 
-                // CRUD
-                addItem() {
-                    this.inventory.push({ ...this.newItem, id: Date.now() });
-                    this.modalOpen = false;
-                    this.newItem = { nombre: '', precio: '', cantidad: 1, unidad: 'u', categoria: 'Almacén', vencimiento: '' };
-                    lucide.createIcons();
+                calculateWeeklyCalories() {
+                    let total = 0;
+                    Object.values(this.weeklyPlan).flat().forEach(recipeId => {
+                        const r = this.recipes.find(x => x.id == recipeId);
+                        if (r) total += parseInt(r.calories || 0);
+                    });
+                    return total;
                 },
-                formatCurrency(val) {
-                    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
-                },
-                getIcon(cat) { return { 'Carnes': '🥩', 'Verduras': '🥦', 'Lácteos': '🧀', 'Almacén': '🥫' }[cat] || '📦'; },
 
-                // 3. CONEXIÓN CON GEMINI (Batch Cooking & Sobras)
-                async sendMessage() {
-                    if (!this.chatInput || !this.apiKey) return;
+                // --- 2. GESTIÓN COMPRAS & PRESUPUESTO ---
+                get shoppingList() {
+                    const needs = {};
                     
-                    const userText = this.chatInput;
-                    this.chatHistory.push({ role: 'user', html: userText });
-                    this.chatInput = '';
-                    this.isLoading = true;
-                    this.scrollToBottom();
+                    // 1. Sumar necesidades del plan
+                    Object.values(this.weeklyPlan).flat().forEach(recipeId => {
+                        const r = this.recipes.find(x => x.id == recipeId);
+                        if (r && r.ingredients) {
+                            r.ingredients.forEach(ing => {
+                                const normName = ing.name.toLowerCase().trim();
+                                if (!needs[normName]) needs[normName] = { amount: 0, unit: ing.unit };
+                                needs[normName].amount += parseFloat(ing.qty || 0);
+                            });
+                        }
+                    });
 
-                    // Preparamos el contexto para que Gemini sea "Inteligente"
-                    const inventoryContext = this.inventory.map(i => 
-                        `- ${i.nombre}: ${i.cantidad} ${i.unidad} (Vence: ${i.vencimiento})`
-                    ).join('\n');
+                    // 2. Comparar con inventario y calcular costo
+                    return Object.keys(needs).map(name => {
+                        const need = needs[name];
+                        // Buscar en inventario (Búsqueda laxa)
+                        const stockItem = this.inventory.find(i => i.nombre.toLowerCase().includes(name) || name.includes(i.nombre.toLowerCase()));
+                        
+                        const stockAmount = stockItem ? parseFloat(stockItem.cantidad) : 0;
+                        const missing = Math.max(0, need.amount - stockAmount);
+                        const price = stockItem ? parseFloat(stockItem.precio) : 0; // Precio por unidad/kg
+                        
+                        return {
+                            name: name.charAt(0).toUpperCase() + name.slice(1),
+                            needed: need.amount,
+                            stock: stockAmount,
+                            missing: missing,
+                            unit: need.unit,
+                            cost: missing * price // Costo proyectado
+                        };
+                    }).filter(i => i.needed > 0).sort((a,b) => b.missing - a.missing);
+                },
+
+                calculateProjectedCost() {
+                    return this.shoppingList.reduce((acc, item) => acc + item.cost, 0);
+                },
+
+                // --- 3. IMPORTADOR AI (GEMINI VISION) ---
+                async analyzeRecipeAI() {
+                    this.isLoading = true;
+                    const fileInput = document.getElementById('recipeImage');
+                    const textInput = this.newRecipeInput;
+                    
+                    let parts = [];
+                    
+                    // Si hay texto
+                    if (textInput) parts.push({ text: `Analiza este plato: "${textInput}".` });
+                    
+                    // Si hay imagen
+                    if (fileInput.files.length > 0) {
+                        const base64 = await this.fileToGenerativePart(fileInput.files[0]);
+                        parts.push(base64);
+                    }
+
+                    if (parts.length === 0) {
+                        this.isLoading = false;
+                        return alert("Sube una foto o escribe un nombre.");
+                    }
 
                     const prompt = `
-                        Actúa como un Chef experto en gestión de hogar y Batch Cooking.
-                        
-                        MI INVENTARIO ACTUAL:
-                        ${inventoryContext}
-                        
-                        PREGUNTA DEL USUARIO:
-                        "${userText}"
-                        
-                        INSTRUCCIONES:
-                        1. Si el usuario pide "Batch Cooking", crea un plan paso a paso optimizando tiempos.
-                        2. Si pide "Receta de sobras", usa SOLO lo que hay en el inventario.
-                        3. Sé breve, usa formato Markdown (negritas, listas).
-                        4. Si hay productos por vencer (mira las fechas en el inventario), priorízalos en la sugerencia.
+                        Eres un nutricionista y chef experto. Analiza la imagen o el nombre del plato.
+                        Devuelve SOLAMENTE un JSON válido (sin markdown, sin bloques de código) con esta estructura exacta:
+                        {
+                            "name": "Nombre corto del plato",
+                            "calories": 0 (número entero aproximado por porción),
+                            "ingredients": [
+                                {"name": "ingrediente generico (ej: pollo, arroz)", "qty": 1, "unit": "kg/u/L"}
+                            ],
+                            "instructions": "Resumen breve de pasos"
+                        }
+                        Normaliza los ingredientes para que coincidan con categorias de supermercado (ej: usar 'pollo' en vez de 'pechuga troceada').
                     `;
+                    parts.push({ text: prompt });
 
                     try {
                         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                            body: JSON.stringify({ contents: [{ parts: parts }] })
                         });
 
                         const data = await response.json();
+                        let textResponse = data.candidates[0].content.parts[0].text;
                         
-                        if (data.error) {
-                             throw new Error(data.error.message);
+                        // Limpieza del JSON (Gemini a veces pone \`\`\`json)
+                        textResponse = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+                        
+                        const recipeData = JSON.parse(textResponse);
+                        
+                        // Agregar imagen si existe para mostrarla en la card
+                        if (fileInput.files.length > 0) {
+                            recipeData.image = URL.createObjectURL(fileInput.files[0]);
                         }
+                        
+                        recipeData.id = Date.now();
+                        this.recipes.push(recipeData);
+                        this.newRecipeInput = '';
+                        fileInput.value = '';
+                        alert("¡Receta guardada!");
 
-                        const aiText = data.candidates[0].content.parts[0].text;
-                        this.chatHistory.push({ role: 'ai', html: marked.parse(aiText) });
-                    } catch (error) {
-                        console.error(error);
-                        this.chatHistory.push({ role: 'ai', html: `<span class="text-red-500 font-bold">Error: ${error.message}. Revisa la consola.</span>` });
+                    } catch (e) {
+                        console.error(e);
+                        alert("Error analizando receta. Intenta de nuevo.");
                     } finally {
                         this.isLoading = false;
-                        this.scrollToBottom();
                     }
                 },
 
-                scrollToBottom() {
-                    setTimeout(() => {
-                        const container = document.getElementById('chat-container');
-                        container.scrollTop = container.scrollHeight;
-                    }, 100);
+                async fileToGenerativePart(file) {
+                    return new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve({
+                            inlineData: { data: reader.result.split(',')[1], mimeType: file.type }
+                        });
+                        reader.readAsDataURL(file);
+                    });
+                },
+
+                // --- UTILIDADES ---
+                addItem() {
+                    this.inventory.push({ ...this.newItem, id: Date.now() });
+                    this.modalOpen = false;
+                    this.newItem = { nombre: '', precio: '', cantidad: 1, unidad: 'u' };
+                },
+                deleteRecipe(id) {
+                    if(confirm("¿Borrar receta?")) this.recipes = this.recipes.filter(r => r.id !== id);
+                },
+                formatCurrency(val) {
+                    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val);
                 }
             }
         }
