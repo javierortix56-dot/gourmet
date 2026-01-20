@@ -31,9 +31,10 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .loader { border: 2px solid #f3f3f3; border-top: 2px solid #FF6B6B; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        /* Estilos para el Markdown del Chat */
+        
+        /* Estilos Markdown Chat */
         .prose p { margin-bottom: 0.5rem; }
-        .prose ul { list-style-type: disc; padding-left: 1.2rem; }
+        .prose ul { list-style-type: disc; padding-left: 1.2rem; margin-bottom: 0.5rem; }
         .prose strong { color: #FF6B6B; font-weight: 700; }
     </style>
 </head>
@@ -97,10 +98,16 @@
                 <p class="text-xs text-gray-400 mb-3 relative z-10">Sube una foto o escribe el nombre. Gemini extraerá ingredientes y calorías.</p>
                 
                 <div class="space-y-2 relative z-10">
-                    <input type="file" id="recipeImage" accept="image/*" class="text-xs w-full bg-white/10 rounded-lg p-2 file:bg-chef-500 file:border-0 file:rounded file:text-white file:text-xs file:font-bold file:px-2">
+                    <label class="block w-full cursor-pointer">
+                        <input type="file" id="recipeImage" accept="image/*" class="hidden" @change="handleFileSelect">
+                        <div class="w-full bg-white/10 border border-white/20 border-dashed rounded-lg p-3 text-center transition-colors hover:bg-white/20">
+                            <span x-text="fileName || '📸 Toca para subir foto'" class="text-xs font-bold text-white"></span>
+                        </div>
+                    </label>
+
                     <div class="flex gap-2">
-                        <input x-model="newRecipeInput" type="text" placeholder="Ej: Milanesa con puré" class="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none">
-                        <button @click="analyzeRecipeAI" class="bg-chef-500 p-2 rounded-lg disabled:opacity-50" :disabled="isLoading">
+                        <input x-model="newRecipeInput" type="text" placeholder="Ej: Milanesa con puré" class="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none placeholder-gray-400">
+                        <button @click="analyzeRecipeAI" class="bg-chef-500 p-2 rounded-lg disabled:opacity-50 transition-colors hover:bg-chef-600" :disabled="isLoading">
                             <i x-show="!isLoading" data-lucide="arrow-right" class="w-5 h-5"></i>
                             <div x-show="isLoading" class="loader w-4 h-4 border-white border-t-transparent"></div>
                         </button>
@@ -113,7 +120,7 @@
                 <template x-for="r in recipes" :key="r.id">
                     <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm relative group">
                         <button @click="deleteRecipe(r.id)" class="absolute top-2 right-2 text-red-300 bg-white rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
-                        <div class="h-20 w-full bg-gray-100 rounded-lg mb-2 overflow-hidden">
+                        <div class="h-24 w-full bg-gray-100 rounded-lg mb-2 overflow-hidden">
                             <img :src="r.image || 'https://placehold.co/400x300/e2e8f0/cbd5e1?text=Receta'" class="w-full h-full object-cover">
                         </div>
                         <h4 class="font-bold text-xs truncate" x-text="r.name"></h4>
@@ -160,7 +167,7 @@
             <div class="flex-1 bg-white rounded-2xl p-4 shadow-sm border border-gray-100 overflow-y-auto mb-2" id="chat-container">
                 <div class="bg-gray-50 p-3 rounded-xl rounded-tl-none mb-3 text-xs text-gray-600">
                     <p class="font-bold mb-1">👨‍🍳 Chef AI conectado.</p>
-                    <p>Dime qué ingredientes tienes o pide sugerencias.</p>
+                    <p>Dime qué ingredientes tienes, pide sugerencias o escribe "Dame una receta con lo que tengo".</p>
                 </div>
                 <template x-for="msg in chatHistory">
                     <div :class="msg.role === 'user' ? 'bg-dark text-white self-end ml-10' : 'bg-gray-100 text-dark self-start mr-10'" class="p-3 rounded-xl mb-3 text-xs shadow-sm prose" x-html="msg.html"></div>
@@ -210,36 +217,39 @@
     </nav>
 
     <div x-show="modalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" style="display:none">
-        <div class="bg-white p-6 rounded-2xl w-80">
-            <h3 class="font-bold mb-4">Nuevo Producto</h3>
-            <input x-model="newItem.nombre" placeholder="Nombre" class="w-full border rounded p-2 mb-2">
-            <input x-model="newItem.precio" type="number" placeholder="Precio" class="w-full border rounded p-2 mb-2">
-            <div class="flex gap-2">
-                <input x-model="newItem.cantidad" type="number" placeholder="Cant" class="w-full border rounded p-2">
-                <select x-model="newItem.unidad" class="w-full border rounded p-2"><option>u</option><option>kg</option><option>L</option></select>
+        <div class="bg-white p-6 rounded-2xl w-80 shadow-2xl">
+            <h3 class="font-bold mb-4 text-lg">Nuevo Producto</h3>
+            <div class="space-y-3">
+                <input x-model="newItem.nombre" placeholder="Nombre (ej: Leche)" class="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold">
+                <input x-model="newItem.precio" type="number" placeholder="Precio ($)" class="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold">
+                <div class="flex gap-2">
+                    <input x-model="newItem.cantidad" type="number" placeholder="Cant" class="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold">
+                    <select x-model="newItem.unidad" class="w-full border border-gray-200 rounded-xl p-3 text-sm font-bold bg-white"><option>u</option><option>kg</option><option>L</option></select>
+                </div>
+                <button @click="addItem" class="w-full bg-dark text-white p-3 rounded-xl mt-2 font-bold hover:bg-black transition-colors">Guardar</button>
+                <button @click="modalOpen=false" class="w-full text-gray-400 p-2 text-xs font-bold">Cancelar</button>
             </div>
-            <button @click="addItem" class="w-full bg-dark text-white p-3 rounded-xl mt-4 font-bold">Guardar</button>
-            <button @click="modalOpen=false" class="w-full text-gray-400 p-2 text-xs mt-2">Cancelar</button>
         </div>
     </div>
 
     <script>
         function app() {
             return {
-                // ⚠️ CAMBIA ESTO POR TU NUEVA CLAVE (NO USES LA EXPUESTA)
-                apiKey: 'TU_NUEVA_CLAVE_AQUI', 
+                // ✅ TU API KEY INTEGRADA
+                apiKey: 'AIzaSyAz0SPk6FpFks7wYjZkUPLzT2DCjT58adI', 
                 
+                // Configuración de Modelo: Usamos 'gemini-1.5-flash' (Estándar)
+                modelName: 'gemini-1.5-flash',
+
                 view: 'planner',
                 modalOpen: false,
                 isLoading: false,
                 newRecipeInput: '',
                 chatInput: '',
                 chatHistory: [],
+                fileName: '', // Para mostrar nombre de archivo
                 
-                // Model config
-                modelName: 'gemini-1.5-flash-latest',
-                
-                // Data
+                // Estado Inicial
                 inventory: JSON.parse(localStorage.getItem('gl_inventory')) || [
                     { id: 1, nombre: 'Pollo', cantidad: 2, unidad: 'kg', precio: 5000 },
                     { id: 2, nombre: 'Arroz', cantidad: 1, unidad: 'kg', precio: 1500 },
@@ -256,12 +266,18 @@
                     this.$watch('inventory', () => this.saveData());
                     this.$watch('recipes', () => this.saveData());
                     this.$watch('weeklyPlan', () => this.saveData());
+                    this.$watch('view', () => setTimeout(() => lucide.createIcons(), 100));
                 },
 
                 saveData() {
                     localStorage.setItem('gl_inventory', JSON.stringify(this.inventory));
                     localStorage.setItem('gl_recipes', JSON.stringify(this.recipes));
                     localStorage.setItem('gl_plan', JSON.stringify(this.weeklyPlan));
+                },
+
+                handleFileSelect(event) {
+                    const file = event.target.files[0];
+                    if (file) this.fileName = file.name;
                 },
 
                 // 1. PLANIFICADOR
@@ -317,15 +333,14 @@
                 get shoppingListCost() { return this.shoppingList.reduce((acc, item) => acc + item.cost, 0); },
                 calculateProjectedCost() { return this.shoppingListCost; },
 
-                // 3. GEMINI VISION & TEXT (CORE FIX)
+                // 3. GEMINI VISION & TEXT
                 async analyzeRecipeAI() {
-                    if (!this.apiKey || this.apiKey.includes('NUEVA_CLAVE')) return alert('Falta configurar la API Key en el código');
                     this.isLoading = true;
                     const fileInput = document.getElementById('recipeImage');
                     const textInput = this.newRecipeInput;
                     
                     let parts = [];
-                    if (textInput) parts.push({ text: `Analiza este plato: "${textInput}".` });
+                    if (textInput) parts.push({ text: `Analiza este plato o nombre: "${textInput}".` });
                     if (fileInput.files.length > 0) {
                         const base64 = await this.fileToGenerativePart(fileInput.files[0]);
                         parts.push(base64);
@@ -333,18 +348,46 @@
 
                     if (parts.length === 0) { this.isLoading = false; return alert("Sube una foto o escribe un nombre."); }
 
-                    const prompt = `Devuelve SOLAMENTE un JSON valido con esta estructura: {"name": "Nombre plato", "calories": 0, "ingredients": [{"name": "ingrediente", "qty": 1, "unit": "u/kg"}], "instructions": "pasos"}`;
+                    // Prompt Estricto para JSON
+                    const prompt = `
+                        Eres un nutricionista experto. Analiza la imagen o el texto proporcionado.
+                        Tu tarea es identificar el plato y estimar sus ingredientes y calorías.
+                        
+                        IMPORTANTE: Debes responder ÚNICAMENTE con un JSON válido. No uses Markdown (\`\`\`json).
+                        Estructura requerida:
+                        {
+                            "name": "Nombre corto del plato",
+                            "calories": 500 (número entero estimado),
+                            "ingredients": [
+                                {"name": "ingrediente 1", "qty": 1, "unit": "kg/u/L"},
+                                {"name": "ingrediente 2", "qty": 0.5, "unit": "kg"}
+                            ],
+                            "instructions": "Resumen muy breve de la preparación."
+                        }
+                    `;
                     parts.push({ text: prompt });
 
                     await this.callGemini(parts, (text) => {
-                        let cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-                        const recipeData = JSON.parse(cleanText);
-                        if (fileInput.files.length > 0) recipeData.image = URL.createObjectURL(fileInput.files[0]);
-                        recipeData.id = Date.now();
-                        this.recipes.push(recipeData);
-                        this.newRecipeInput = '';
-                        fileInput.value = '';
-                        alert("¡Receta guardada!");
+                        try {
+                            // Limpieza agresiva del texto para evitar errores de formato Markdown
+                            let cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                            const recipeData = JSON.parse(cleanText);
+                            
+                            // Guardar imagen localmente para mostrarla
+                            if (fileInput.files.length > 0) recipeData.image = URL.createObjectURL(fileInput.files[0]);
+                            
+                            recipeData.id = Date.now();
+                            this.recipes.push(recipeData);
+                            
+                            // Reset
+                            this.newRecipeInput = '';
+                            fileInput.value = '';
+                            this.fileName = '';
+                            alert(`✅ ¡Receta "${recipeData.name}" guardada!`);
+                        } catch(e) {
+                            console.error("Error parseando JSON:", text);
+                            alert("La IA entendió la imagen pero falló al crear el formato de datos. Por favor, intenta con otra foto más clara.");
+                        }
                     });
                 },
 
@@ -354,20 +397,28 @@
                     this.chatHistory.push({ role: 'user', html: msg });
                     this.chatInput = '';
                     this.isLoading = true;
+                    this.scrollToBottom();
 
                     // Contexto del inventario
-                    const context = "Tengo en inventario: " + this.inventory.map(i => `${i.cantidad} ${i.unidad} de ${i.nombre}`).join(', ');
-                    const parts = [{ text: `Eres un Chef experto. ${context}. Usuario: ${msg}` }];
+                    const inventoryText = this.inventory.map(i => `${i.cantidad} ${i.unidad} de ${i.nombre}`).join(', ');
+                    const context = `
+                        Actúa como un Chef personal.
+                        MI INVENTARIO: ${inventoryText || 'La alacena está vacía'}.
+                        PREGUNTA DEL USUARIO: "${msg}".
+                        Responde brevemente usando formato Markdown (negritas, listas).
+                    `;
+                    
+                    const parts = [{ text: context }];
 
                     await this.callGemini(parts, (text) => {
                         this.chatHistory.push({ role: 'ai', html: marked.parse(text) });
+                        this.scrollToBottom();
                     });
                 },
 
-                // FUNCIÓN CENTRALIZADA DE LLAMADA A API (PARA EVITAR ERRORES DUPLICADOS)
+                // LLAMADA API CENTRALIZADA
                 async callGemini(parts, callback) {
                     try {
-                        // URL corregida a v1beta + gemini-1.5-flash-latest
                         const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.modelName}:generateContent?key=${this.apiKey}`;
                         
                         const response = await fetch(url, {
@@ -379,15 +430,19 @@
                         const data = await response.json();
                         
                         if (data.error) {
-                            console.error("Error API:", data.error);
-                            throw new Error(data.error.message);
+                            console.error("Error de Google:", data.error);
+                            throw new Error(data.error.message || "Error desconocido de la API");
+                        }
+
+                        if (!data.candidates || data.candidates.length === 0) {
+                            throw new Error("La IA no devolvió ninguna respuesta.");
                         }
 
                         const text = data.candidates[0].content.parts[0].text;
                         callback(text);
 
                     } catch (e) {
-                        alert("Error de Google Gemini: " + e.message + ". \n\nRevisa la consola (F12) para más detalles.");
+                        alert(`❌ Error Técnico:\n${e.message}\n\nRevisa la consola para más detalles.`);
                     } finally {
                         this.isLoading = false;
                     }
@@ -403,10 +458,26 @@
                     });
                 },
 
+                scrollToBottom() {
+                    setTimeout(() => {
+                        const container = document.getElementById('chat-container');
+                        if(container) container.scrollTop = container.scrollHeight;
+                    }, 100);
+                },
+
                 // UTILS
-                addItem() { this.inventory.push({ ...this.newItem, id: Date.now() }); this.modalOpen = false; this.newItem = { nombre: '', precio: '', cantidad: 1, unidad: 'u' }; },
-                deleteRecipe(id) { if(confirm("¿Borrar?")) this.recipes = this.recipes.filter(r => r.id !== id); },
-                formatCurrency(val) { return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val); }
+                addItem() { 
+                    if(!this.newItem.nombre) return alert("Ponle nombre al producto");
+                    this.inventory.push({ ...this.newItem, id: Date.now() }); 
+                    this.modalOpen = false; 
+                    this.newItem = { nombre: '', precio: '', cantidad: 1, unidad: 'u' }; 
+                },
+                deleteRecipe(id) { 
+                    if(confirm("¿Borrar esta receta?")) this.recipes = this.recipes.filter(r => r.id !== id); 
+                },
+                formatCurrency(val) { 
+                    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(val); 
+                }
             }
         }
     </script>
